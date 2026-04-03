@@ -134,19 +134,23 @@
                        value="<%= (request.getAttribute("profile") != null) ? ((com.bupt.is.model.ApplicantProfile)request.getAttribute("profile")).getStudentId() : "" %>"
                        required>
 
+                <%-- 新增：电话号码输入框 (Story 4) --%>
+                        <label>电话号码</label>
+                        <input type="text" name="phoneNumber"
+                               value="<%= (request.getAttribute("profile") != null) ? ((com.bupt.is.model.ApplicantProfile)request.getAttribute("profile")).getPhoneNumber() : "" %>">
+
                 <button type="submit" class="btn btn-primary">保存档案</button>
                 <a href="<%=request.getContextPath()%>/user/profile" class="btn btn-outline">刷新</a>
             </form>
         </div>
-
+        <%-- CV 上传部分 (Story 5) --%>
         <div class="card">
-            <h2 style="font-size:16px;margin-top:0;">上传简历 CV（Story5）</h2>
-            <p class="muted">仅支持 PDF。保存路径：`./data/cv/&lt;userId&gt;.pdf`</p>
-
-            <%
-                com.bupt.is.model.User user = (com.bupt.is.model.User) request.getAttribute("user");
-                String cvPath = user != null ? user.getCvPath() : null;
-            %>
+            <h2 style="font-size:16px;margin-top:0;">上传简历 CV (Story 5)</h2>
+            <form action="<%=request.getContextPath()%>/user/cv/upload" method="post" enctype="multipart/form-data">
+                <input type="file" name="cv" accept=".pdf" required>
+                <button type="submit" class="btn btn-primary">上传 PDF</button>
+            </form>
+        </div>
 
             <div style="margin-bottom:12px;">
                 <strong>当前简历：</strong>

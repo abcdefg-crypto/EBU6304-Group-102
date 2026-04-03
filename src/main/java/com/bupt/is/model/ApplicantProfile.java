@@ -6,11 +6,12 @@ package com.bupt.is.model;
 public class ApplicantProfile {
     private String name;
     private String studentId;
+    private String phoneNumber; // 新增：满足story4要求
 
     public ApplicantProfile() {
     }
 
-    public ApplicantProfile(String name, String studentId) {
+    public ApplicantProfile(String name, String studentId, String phoneNumber) {
         this.name = name;
         this.studentId = studentId;
     }

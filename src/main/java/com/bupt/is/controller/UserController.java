@@ -14,15 +14,19 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
 @WebServlet(urlPatterns = {"/user/register", "/user/profile", "/user/cv/upload"})
-@MultipartConfig
+@MultipartConfig(
+        fileSizeThreshold = 1024 * 1024, // 1MB
+        maxFileSize = 10 * 1024 * 1024,  // 10MB
+        maxRequestSize = 20 * 1024 * 1024
+)
 public class UserController extends HttpServlet {
 
     private final UserService userService = new UserServiceImpl();
@@ -41,28 +45,66 @@ public class UserController extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String servletPath = request.getServletPath();
         try {
-            if ("/user/register".equals(servletPath)) {
-                doRegister(request, response);
-                return;
-            }
-            if ("/user/profile".equals(servletPath)) {
-                doProfilePost(request, response);
-                return;
-            }
-            if ("/user/cv/upload".equals(servletPath)) {
-                doCvUpload(request, response);
-                return;
+            switch (servletPath) {
+                case "/user/register" -> doRegister(request, response);
+                case "/user/profile" -> doProfilePost(request, response);
+                case "/user/cv/upload" -> doCvUpload(request, response);
+                default -> response.sendError(404);
             }
         } catch (IllegalArgumentException e) {
             request.setAttribute("error", e.getMessage());
-            if ("/user/register".equals(servletPath)) {
-                request.getRequestDispatcher("/register.jsp").forward(request, response);
-            } else {
-                request.getRequestDispatcher("/profile.jsp").forward(request, response);
-            }
-            return;
+            String target = "/user/register".equals(servletPath) ? "/register.jsp" : "/profile.jsp";
+            request.getRequestDispatcher(target).forward(request, response);
         }
-        response.sendError(404);
+    }
+
+    // doProfilePost 重构：处理邮箱和电话的修改 (Story 4)
+    private void doProfilePost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        HttpSession session = request.getSession(false);
+        String userId = (String) session.getAttribute("userId");
+        User existing = userService.findById(userId);
+
+        // 获取参数
+        String email = request.getParameter("email");
+        String name = request.getParameter("name");
+        String studentId = request.getParameter("studentId");
+        String phoneNumber = request.getParameter("phoneNumber"); // 获取新字段
+
+        // 封装 Profile 逻辑
+        ApplicantProfile profile = new ApplicantProfile(name, studentId, phoneNumber);
+        existing.setEmail(email);
+        existing.setProfile(GsonUtil.toJson(profile));
+
+        userService.updateProfile(existing);
+        response.sendRedirect(request.getContextPath() + "/user/profile?updated=1");
+    }
+
+    private void doCvUpload(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        HttpSession session = request.getSession(false);
+        String userId = (String) session.getAttribute("userId");
+
+        Part cvPart = request.getPart("cv");
+        if (cvPart == null || cvPart.getSize() <= 0) {
+            throw new IllegalArgumentException("请选择要上传的文件");
+        }
+
+        String submittedName = cvPart.getSubmittedFileName();
+        if (submittedName == null || !submittedName.toLowerCase().endsWith(".pdf")) {
+            throw new IllegalArgumentException("Story 5 要求：仅支持 PDF 格式");
+        }
+
+        // 使用 getServletContext().getRealPath 确保在服务器部署目录下创建文件夹
+        String uploadPath = getServletContext().getRealPath("/data/cv");
+        File uploadDir = new File(uploadPath);
+        if (!uploadDir.exists()) uploadDir.mkdirs();
+
+        String fileName = userId + ".pdf";
+        cvPart.write(uploadPath + File.separator + fileName);
+
+        // 保存相对路径，方便后续通过 Web 访问
+        String relativePath = "data/cv/" + fileName;
+        userService.uploadCv(userId, relativePath);
+        response.sendRedirect(request.getContextPath() + "/user/profile?cv=1");
     }
 
     private void doRegister(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -72,8 +114,9 @@ public class UserController extends HttpServlet {
         String name = request.getParameter("name");
         String studentId = request.getParameter("studentId");
         String role = request.getParameter("role");
+        String phoneNumber = request.getParameter("phoneNumber");
 
-        ApplicantProfile profile = new ApplicantProfile(name, studentId);
+        ApplicantProfile profile = new ApplicantProfile(name, studentId, phoneNumber);
 
         User user = new User();
         user.setUsername(username);
@@ -101,66 +144,14 @@ public class UserController extends HttpServlet {
         request.getRequestDispatcher("/profile.jsp").forward(request, response);
     }
 
-    private void doProfilePost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        SessionUser sessionUser = requireSessionUser(request);
-        User existing = userService.findById(sessionUser.userId);
-        if (existing == null) {
-            response.sendRedirect(request.getContextPath() + "/login.jsp?error=1");
-            return;
-        }
-
-        String email = request.getParameter("email");
-        String name = request.getParameter("name");
-        String studentId = request.getParameter("studentId");
-
-        ApplicantProfile profile = new ApplicantProfile(name, studentId);
-        existing.setEmail(email);
-        existing.setProfile(GsonUtil.toJson(profile));
-
-        userService.updateProfile(existing);
-        response.sendRedirect(request.getContextPath() + "/user/profile?updated=1");
-    }
-
-    private void doCvUpload(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        SessionUser sessionUser = requireSessionUser(request);
-        if (!"TA".equals(sessionUser.role) && !"MO".equals(sessionUser.role)) {
-            throw new IllegalArgumentException("Only TA/MO can upload CV in this demo");
-        }
-
-        Part cvPart = request.getPart("cv");
-        if (cvPart == null || cvPart.getSize() <= 0) {
-            throw new IllegalArgumentException("Please upload a PDF file");
-        }
-
-        String submittedName = cvPart.getSubmittedFileName();
-        if (submittedName == null || !submittedName.toLowerCase().endsWith(".pdf")) {
-            throw new IllegalArgumentException("Only PDF is supported");
-        }
-
-        Path cvDir = Paths.get("data", "cv");
-        Files.createDirectories(cvDir);
-
-        String fileName = sessionUser.userId + ".pdf";
-        Path target = cvDir.resolve(fileName);
-        try {
-            cvPart.write(target.toString());
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Failed to save CV: " + e.getMessage());
-        }
-
-        String relative = "cv/" + fileName;
-        userService.uploadCv(sessionUser.userId, relative);
-        response.sendRedirect(request.getContextPath() + "/user/profile?cv=1");
-    }
-
     private static ApplicantProfile parseApplicantProfile(String profileJson) {
         if (profileJson == null || profileJson.trim().isEmpty()) {
-            return new ApplicantProfile("", "");
+            return new ApplicantProfile("", "", "");
         }
         try {
             return GsonUtil.fromJson(profileJson, ApplicantProfile.class);
         } catch (Exception e) {
-            return new ApplicantProfile("", "");
+            return new ApplicantProfile("", "", "");
         }
     }
 
