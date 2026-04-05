@@ -19,8 +19,8 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @WebServlet(urlPatterns = {"/jobs", "/jobs/detail", "/jobs/post"})
 public class JobController extends HttpServlet {
@@ -81,6 +81,10 @@ public class JobController extends HttpServlet {
         request.setAttribute("job", job);
         request.setAttribute("canApply", canApply);
 
+        String userId = getUserId(request);
+        boolean canEditJob = "MO".equals(role) && userId != null && Objects.equals(userId, job.getPostedBy());
+        request.setAttribute("canEditJob", canEditJob);
+
         if ("MO".equals(role)) {
             List<Application> apps = applicationService.getApplicantsForJob(jobId);
             List<ApplicantCV> applicantCvs = new ArrayList<>();
@@ -100,14 +104,37 @@ public class JobController extends HttpServlet {
         request.setAttribute("role", role);
         if (!"MO".equals(role)) {
             request.setAttribute("error", "只有 MO 可以发布岗位");
+            request.getRequestDispatcher("/mo_post_job.jsp").forward(request, response);
+            return;
         }
+
+        String jobId = request.getParameter("jobId");
+        if (jobId != null && !jobId.trim().isEmpty()) {
+            String userId = getUserId(request);
+            Job existing = jobService.getJobById(jobId.trim());
+            if (existing == null) {
+                request.setAttribute("error", "岗位不存在");
+            } else if (userId == null || !Objects.equals(userId, existing.getPostedBy())) {
+                request.setAttribute("error", "只能编辑自己发布的岗位");
+            } else {
+                request.setAttribute("editJob", existing);
+            }
+        }
+
         request.getRequestDispatcher("/mo_post_job.jsp").forward(request, response);
     }
 
     private void doPostJob(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        SessionUser sessionUser = requireSessionUser(request);
+        SessionUser sessionUser;
+        try {
+            sessionUser = requireSessionUser(request);
+        } catch (IllegalArgumentException e) {
+            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            return;
+        }
         if (!"MO".equals(sessionUser.role)) {
-            throw new IllegalArgumentException("Only MO can post jobs");
+            response.sendError(403);
+            return;
         }
 
         String title = request.getParameter("title");
@@ -115,12 +142,14 @@ public class JobController extends HttpServlet {
         String module = request.getParameter("module");
         String requiredSkills = request.getParameter("requiredSkills");
         String maxApplicantsStr = request.getParameter("maxApplicants");
+        String jobIdParam = request.getParameter("jobId");
 
         int maxApplicants;
         try {
             maxApplicants = Integer.parseInt(maxApplicantsStr);
         } catch (Exception e) {
-            throw new IllegalArgumentException("maxApplicants must be a number");
+            forwardPostJobError(request, response, sessionUser, jobIdParam, "maxApplicants must be a number");
+            return;
         }
 
         List<String> skills = parseSkills(requiredSkills);
@@ -133,8 +162,37 @@ public class JobController extends HttpServlet {
         job.setMaxApplicants(maxApplicants);
 
         User mo = userService.findById(sessionUser.userId);
-        jobService.postJob(job, mo);
-        response.sendRedirect(request.getContextPath() + "/jobs?posted=1");
+        if (mo == null) {
+            forwardPostJobError(request, response, sessionUser, jobIdParam, "user not found");
+            return;
+        }
+
+        try {
+            if (jobIdParam != null && !jobIdParam.trim().isEmpty()) {
+                job.setJobId(jobIdParam.trim());
+                jobService.updateJob(job, mo);
+                response.sendRedirect(request.getContextPath() + "/jobs?updated=1");
+            } else {
+                jobService.postJob(job, mo);
+                response.sendRedirect(request.getContextPath() + "/jobs?posted=1");
+            }
+        } catch (IllegalArgumentException e) {
+            forwardPostJobError(request, response, sessionUser, jobIdParam, e.getMessage());
+        }
+    }
+
+    private void forwardPostJobError(HttpServletRequest request, HttpServletResponse response,
+                                     SessionUser sessionUser, String jobIdParam, String message)
+            throws ServletException, IOException {
+        request.setAttribute("role", sessionUser.role);
+        request.setAttribute("error", message);
+        if (jobIdParam != null && !jobIdParam.trim().isEmpty()) {
+            Job existing = jobService.getJobById(jobIdParam.trim());
+            if (existing != null && Objects.equals(sessionUser.userId, existing.getPostedBy())) {
+                request.setAttribute("editJob", existing);
+            }
+        }
+        request.getRequestDispatcher("/mo_post_job.jsp").forward(request, response);
     }
 
     private static List<String> parseSkills(String requiredSkills) {
@@ -163,6 +221,14 @@ public class JobController extends HttpServlet {
             return null;
         }
         return (String) session.getAttribute("role");
+    }
+
+    private static String getUserId(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            return null;
+        }
+        return (String) session.getAttribute("userId");
     }
 
     private static SessionUser requireSessionUser(HttpServletRequest request) {

@@ -8,6 +8,8 @@ public interface JobService {
 
     void postJob(Job job, User mo);
 
+    void updateJob(Job job, User mo);
+
     List<Job> getAvailableJobs();
 
     Job getJobById(String jobId);
