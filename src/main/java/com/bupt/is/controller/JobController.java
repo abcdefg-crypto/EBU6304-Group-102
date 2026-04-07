@@ -1,6 +1,5 @@
 package com.bupt.is.controller;
 
-import com.bupt.is.model.ApplicantCV;
 import com.bupt.is.model.Application;
 import com.bupt.is.model.Job;
 import com.bupt.is.model.User;
@@ -83,21 +82,34 @@ public class JobController extends HttpServlet {
         boolean canApply = "TA".equals(role) && job.isOpen();
         request.setAttribute("role", role);
         request.setAttribute("job", job);
-        request.setAttribute("canApply", canApply);
 
         String userId = getUserId(request);
+        boolean hasApplied = false;
+        if ("TA".equals(role) && userId != null) {
+            List<Application> myApplications = applicationService.getUserApplications(userId);
+            for (Application a : myApplications) {
+                if (Objects.equals(jobId, a.getJobId())) {
+                    hasApplied = true;
+                    break;
+                }
+            }
+        }
+        request.setAttribute("hasApplied", hasApplied);
+        request.setAttribute("canApply", canApply && !hasApplied);
+
         boolean canEditJob = "MO".equals(role) && userId != null && Objects.equals(userId, job.getPostedBy());
         request.setAttribute("canEditJob", canEditJob);
 
         if ("MO".equals(role)) {
             List<Application> apps = applicationService.getApplicantsForJob(jobId);
-            List<ApplicantCV> applicantCvs = new ArrayList<>();
+            java.util.Map<String, String> applicantNameMap = new java.util.HashMap<>();
             for (Application a : apps) {
                 User u = userService.findById(a.getApplicantId());
                 String username = u != null ? u.getUsername() : a.getApplicantId();
-                applicantCvs.add(new ApplicantCV(a.getApplicantId(), username, a.getCvPath(), a.getApplicationId()));
+                applicantNameMap.put(a.getApplicantId(), username);
             }
-            request.setAttribute("applicantCvs", applicantCvs);
+            request.setAttribute("applications", apps);
+            request.setAttribute("applicantNameMap", applicantNameMap);
         }
 
         request.getRequestDispatcher("/job_detail.jsp").forward(request, response);

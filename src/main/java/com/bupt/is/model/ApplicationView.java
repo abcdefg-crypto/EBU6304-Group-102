@@ -6,13 +6,15 @@ public class ApplicationView {
     private final String jobTitle;
     private final String module;
     private final String status;
+    private final String appliedAt;
 
-    public ApplicationView(String applicationId, String jobId, String jobTitle, String module, String status) {
+    public ApplicationView(String applicationId, String jobId, String jobTitle, String module, String status, String appliedAt) {
         this.applicationId = applicationId;
         this.jobId = jobId;
         this.jobTitle = jobTitle;
         this.module = module;
         this.status = status;
+        this.appliedAt = appliedAt;
     }
 
     public String getApplicationId() {
@@ -33,5 +35,9 @@ public class ApplicationView {
 
     public String getStatus() {
         return status;
+    }
+
+    public String getAppliedAt() {
+        return appliedAt;
     }
 }

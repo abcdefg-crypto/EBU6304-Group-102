@@ -8,6 +8,7 @@ public class Application {
 
     private String status;
     private String cvPath;
+    private String appliedAt;
     private int score;
 
     public Application() {}
@@ -27,6 +28,9 @@ public class Application {
 
     public String getCvPath() { return cvPath; }
     public void setCvPath(String cvPath) { this.cvPath = cvPath; }
+
+    public String getAppliedAt() { return appliedAt; }
+    public void setAppliedAt(String appliedAt) { this.appliedAt = appliedAt; }
 
     public int getScore() { return score; }
     public void setScore(int score) { this.score = score; }

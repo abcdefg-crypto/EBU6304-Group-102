@@ -15,10 +15,10 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 
 import java.io.IOException;
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 @WebServlet(urlPatterns = {"/user/register", "/user/profile", "/user/cv/upload"})
@@ -69,9 +69,11 @@ public class UserController extends HttpServlet {
         String name = request.getParameter("name");
         String studentId = request.getParameter("studentId");
         String phoneNumber = request.getParameter("phoneNumber"); // 获取新字段
+        String skills = request.getParameter("skills");
+        String selfIntroduction = request.getParameter("selfIntroduction");
 
         // 封装 Profile 逻辑
-        ApplicantProfile profile = new ApplicantProfile(name, studentId, phoneNumber);
+        ApplicantProfile profile = new ApplicantProfile(name, studentId, phoneNumber, skills, selfIntroduction);
         existing.setEmail(email);
         existing.setProfile(GsonUtil.toJson(profile));
 
@@ -93,16 +95,16 @@ public class UserController extends HttpServlet {
             throw new IllegalArgumentException("Story 5 要求：仅支持 PDF 格式");
         }
 
-        // 使用 getServletContext().getRealPath 确保在服务器部署目录下创建文件夹
-        String uploadPath = getServletContext().getRealPath("/data/cv");
-        File uploadDir = new File(uploadPath);
-        if (!uploadDir.exists()) uploadDir.mkdirs();
-
         String fileName = userId + ".pdf";
-        cvPart.write(uploadPath + File.separator + fileName);
+        Path cvDir = Paths.get("data", "cv").toAbsolutePath().normalize();
+        Files.createDirectories(cvDir);
+        Path targetFile = cvDir.resolve(fileName);
+        try (var input = cvPart.getInputStream()) {
+            Files.copy(input, targetFile, StandardCopyOption.REPLACE_EXISTING);
+        }
 
-        // 保存相对路径，方便后续通过 Web 访问
-        String relativePath = "data/cv/" + fileName;
+        // 保存相对路径，方便下载控制器在 data 目录内定位
+        String relativePath = "cv/" + fileName;
         userService.uploadCv(userId, relativePath);
         response.sendRedirect(request.getContextPath() + "/user/profile?cv=1");
     }
@@ -115,8 +117,10 @@ public class UserController extends HttpServlet {
         String studentId = request.getParameter("studentId");
         String role = request.getParameter("role");
         String phoneNumber = request.getParameter("phoneNumber");
+        String skills = request.getParameter("skills");
+        String selfIntroduction = request.getParameter("selfIntroduction");
 
-        ApplicantProfile profile = new ApplicantProfile(name, studentId, phoneNumber);
+        ApplicantProfile profile = new ApplicantProfile(name, studentId, phoneNumber, skills, selfIntroduction);
 
         User user = new User();
         user.setUsername(username);
@@ -146,12 +150,12 @@ public class UserController extends HttpServlet {
 
     private static ApplicantProfile parseApplicantProfile(String profileJson) {
         if (profileJson == null || profileJson.trim().isEmpty()) {
-            return new ApplicantProfile("", "", "");
+            return new ApplicantProfile("", "", "", "", "");
         }
         try {
             return GsonUtil.fromJson(profileJson, ApplicantProfile.class);
         } catch (Exception e) {
-            return new ApplicantProfile("", "", "");
+            return new ApplicantProfile("", "", "", "", "");
         }
     }
 

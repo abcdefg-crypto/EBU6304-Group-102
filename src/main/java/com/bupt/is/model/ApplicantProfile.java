@@ -7,14 +7,18 @@ public class ApplicantProfile {
     private String name;
     private String studentId;
     private String phoneNumber;
+    private String skills;
+    private String selfIntroduction;
 
     public ApplicantProfile() {
     }
 
-    public ApplicantProfile(String name, String studentId, String phoneNumber) {
+    public ApplicantProfile(String name, String studentId, String phoneNumber, String skills, String selfIntroduction) {
         this.name = name;
         this.studentId = studentId;
         this.phoneNumber = phoneNumber;
+        this.skills = skills;
+        this.selfIntroduction = selfIntroduction;
     }
 
     public String getName() {
@@ -39,5 +43,21 @@ public class ApplicantProfile {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public String getSkills() {
+        return skills;
+    }
+
+    public void setSkills(String skills) {
+        this.skills = skills;
+    }
+
+    public String getSelfIntroduction() {
+        return selfIntroduction;
+    }
+
+    public void setSelfIntroduction(String selfIntroduction) {
+        this.selfIntroduction = selfIntroduction;
     }
 }

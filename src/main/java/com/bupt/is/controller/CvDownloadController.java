@@ -21,13 +21,18 @@ public class CvDownloadController extends HttpServlet {
             response.sendError(400);
             return;
         }
-        if (cvPath.contains("..") || cvPath.startsWith("/") || cvPath.startsWith("\\")) {
+        String normalizedCvPath = cvPath.trim().replace('\\', '/');
+        if (normalizedCvPath.startsWith("data/")) {
+            // Backward compatibility: old records may store "data/cv/xxx.pdf".
+            normalizedCvPath = normalizedCvPath.substring("data/".length());
+        }
+        if (normalizedCvPath.contains("..") || normalizedCvPath.startsWith("/") || normalizedCvPath.startsWith("\\")) {
             response.sendError(403);
             return;
         }
 
         Path baseDir = Paths.get("data").toAbsolutePath().normalize();
-        Path file = baseDir.resolve(cvPath).normalize();
+        Path file = baseDir.resolve(normalizedCvPath).normalize();
         if (!file.startsWith(baseDir)) {
             response.sendError(403);
             return;

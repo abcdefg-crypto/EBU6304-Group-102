@@ -58,7 +58,7 @@ public class AuthController extends HttpServlet {
         if ("TA".equals(primaryRole)) {
             response.sendRedirect(request.getContextPath() + "/jobs");
         } else if ("MO".equals(primaryRole)) {
-            response.sendRedirect(request.getContextPath() + "/jobs/post");
+            response.sendRedirect(request.getContextPath() + "/jobs");
         } else {
             response.sendRedirect(request.getContextPath() + "/jobs");
         }

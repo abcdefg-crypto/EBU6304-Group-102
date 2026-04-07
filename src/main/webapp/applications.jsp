@@ -12,6 +12,9 @@
         .card { border: 1px solid #e1e5f2; border-radius: 10px; padding: 16px; background: #fafbff; margin-bottom: 14px; }
         .meta { color:#4b5563; font-size: 13px; margin-bottom: 6px; }
         .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; background: #e0ecff; color: #1d4ed8; margin-right: 6px; }
+        .tag.accepted { background:#dcfce7; color:#166534; }
+        .tag.rejected { background:#fee2e2; color:#991b1b; }
+        .tag.pending { background:#e5e7eb; color:#374151; }
         .empty { color:#6b7280; font-size:14px; }
         .btn { border-radius: 999px; padding: 8px 14px; border: 1px solid #cbd5f5; background:#fff; color:#2563eb; font-size: 13px; text-decoration:none; display:inline-block; }
     </style>
@@ -34,6 +37,17 @@
     <p class="meta">Story 8：提交申请后，申请会出现在用户自己的 application list 中。</p>
 
     <%
+        String submitted = request.getParameter("submitted");
+        String submittedJobTitle = request.getParameter("jobTitle");
+        String submittedAppliedAt = request.getParameter("appliedAt");
+    %>
+    <% if ("1".equals(submitted)) { %>
+        <div style="background:#dcfce7;color:#166534;padding:10px;border-radius:10px;font-size:13px;margin-bottom:14px;">
+            申请提交成功：岗位「<%= submittedJobTitle == null ? "-" : submittedJobTitle %>」，申请日期 <%= submittedAppliedAt == null ? "-" : submittedAppliedAt %>。
+        </div>
+    <% } %>
+
+    <%
         java.util.List<com.bupt.is.model.ApplicationView> applications =
                 (java.util.List<com.bupt.is.model.ApplicationView>) request.getAttribute("applications");
         if (applications == null || applications.isEmpty()) {
@@ -41,15 +55,26 @@
         <div class="empty">你还没有提交任何申请。先去岗位列表看看吧。</div>
     <%
         } else {
-            for (com.bupt.is.model.ApplicationView application : applications) {
+            for (com.bupt.is.model.ApplicationView appView : applications) {
+                String status = appView.getStatus() == null ? "PENDING" : appView.getStatus().trim().toUpperCase();
+                String tagClass = "pending";
+                String statusText = "pending";
+                if ("ACCEPTED".equals(status)) {
+                    tagClass = "accepted";
+                    statusText = "accepted";
+                } else if ("REJECTED".equals(status)) {
+                    tagClass = "rejected";
+                    statusText = "rejected";
+                }
     %>
         <div class="card">
-            <div class="tag"><%= application.getStatus() %></div>
-            <h3 style="margin:10px 0 8px;"><%= application.getJobTitle() %></h3>
-            <div class="meta">课程/模块：<%= application.getModule() %></div>
-            <div class="meta">申请编号：<%= application.getApplicationId() %></div>
-            <div class="meta">岗位编号：<%= application.getJobId() %></div>
-            <a class="btn" href="<%=request.getContextPath()%>/jobs/detail?jobId=<%= application.getJobId() %>">查看岗位详情</a>
+            <div class="tag <%= tagClass %>"><%= statusText %></div>
+            <h3 style="margin:10px 0 8px;"><%= appView.getJobTitle() %></h3>
+            <div class="meta">课程/模块：<%= appView.getModule() %></div>
+            <div class="meta">申请编号：<%= appView.getApplicationId() %></div>
+            <div class="meta">岗位编号：<%= appView.getJobId() %></div>
+            <div class="meta">申请日期：<%= appView.getAppliedAt() == null ? "-" : appView.getAppliedAt() %></div>
+            <a class="btn" href="<%=request.getContextPath()%>/jobs/detail?jobId=<%= appView.getJobId() %>">查看岗位详情</a>
         </div>
     <%
             }

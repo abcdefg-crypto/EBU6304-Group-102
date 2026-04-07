@@ -12,7 +12,8 @@
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .card { border: 1px solid #e1e5f2; border-radius: 10px; padding: 16px; background: #fafbff; }
         label { display: block; font-size: 13px; color: #374151; margin-bottom: 6px; }
-        input[type="text"], input[type="email"], input[type="file"] { width: 100%; padding: 9px 11px; border-radius: 9px; border: 1px solid #d1d5db; font-size: 13px; box-sizing: border-box; margin-bottom: 12px; }
+        input[type="text"], input[type="email"], input[type="file"], textarea { width: 100%; padding: 9px 11px; border-radius: 9px; border: 1px solid #d1d5db; font-size: 13px; box-sizing: border-box; margin-bottom: 12px; }
+        textarea { resize: vertical; min-height: 90px; }
         .btn { border-radius: 999px; padding: 9px 16px; border: none; font-size: 14px; cursor: pointer; text-decoration: none; display: inline-block; margin-right: 10px; }
         .btn-primary { background: #2563eb; color: #fff; }
         .btn-outline { background: #fff; color: #2563eb; border: 1px solid #cbd5f5; }
@@ -69,6 +70,12 @@
 
                 <label>电话号码</label>
                 <input type="text" name="phoneNumber" value="<%= profile != null ? profile.getPhoneNumber() : "" %>">
+
+                <label>个人技能</label>
+                <textarea name="skills" placeholder="如：Java, SQL, Web 开发"><%= profile != null && profile.getSkills() != null ? profile.getSkills() : "" %></textarea>
+
+                <label>自我介绍</label>
+                <textarea name="selfIntroduction" placeholder="简要介绍你的经历和优势"><%= profile != null && profile.getSelfIntroduction() != null ? profile.getSelfIntroduction() : "" %></textarea>
 
                 <button type="submit" class="btn btn-primary">保存档案</button>
                 <a href="<%=request.getContextPath()%>/user/profile" class="btn btn-outline">刷新</a>

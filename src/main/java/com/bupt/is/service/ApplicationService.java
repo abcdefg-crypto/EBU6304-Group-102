@@ -9,6 +9,8 @@ public interface ApplicationService {
 
     List<Application> getUserApplications(String userId);
 
+    Application getApplicationById(String appId);
+
     void updateStatus(String appId, String status);
 
     List<Application> getApplicantsForJob(String jobId);
