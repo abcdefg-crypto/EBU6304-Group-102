@@ -60,9 +60,13 @@ public class JobController extends HttpServlet {
 
     private void doJobsList(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String role = getRole(request);
-        List<Job> jobs = jobService.getAvailableJobs();
+        String keyword = request.getParameter("keyword");
+        boolean searchMode = keyword != null && !keyword.trim().isEmpty();
+        List<Job> jobs = searchMode ? jobService.searchAvailableJobs(keyword) : jobService.getAvailableJobs();
         request.setAttribute("role", role);
         request.setAttribute("jobs", jobs);
+        request.setAttribute("keyword", keyword == null ? "" : keyword.trim());
+        request.setAttribute("searchMode", searchMode);
         request.getRequestDispatcher("/jobs.jsp").forward(request, response);
     }
 

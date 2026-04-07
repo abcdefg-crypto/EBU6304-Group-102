@@ -77,6 +77,14 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
+    public List<Job> searchAvailableJobs(String keyword) {
+        if (isBlank(keyword)) {
+            return getAvailableJobs();
+        }
+        return jobRepository.searchOpenJobs(keyword);
+    }
+
+    @Override
     public Job getJobById(String jobId) {
         if (isBlank(jobId)) {
             return null;

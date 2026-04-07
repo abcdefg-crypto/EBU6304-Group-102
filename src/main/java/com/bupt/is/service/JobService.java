@@ -12,6 +12,8 @@ public interface JobService {
 
     List<Job> getAvailableJobs();
 
+    List<Job> searchAvailableJobs(String keyword);
+
     Job getJobById(String jobId);
 
     void closeJob(String jobId);
