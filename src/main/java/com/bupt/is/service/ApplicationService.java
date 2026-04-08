@@ -11,7 +11,7 @@ public interface ApplicationService {
 
     Application getApplicationById(String appId);
 
-    void updateStatus(String appId, String status);
+    void updateStatus(String appId, String status, String reason);
 
     List<Application> getApplicantsForJob(String jobId);
 }

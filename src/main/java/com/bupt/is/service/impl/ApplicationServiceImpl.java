@@ -69,7 +69,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public void updateStatus(String appId, String status) {
+    public void updateStatus(String appId, String status, String reason) {
         if (isBlank(appId) || isBlank(status)) {
             throw new IllegalArgumentException("appId/status are required");
         }
@@ -84,6 +84,11 @@ public class ApplicationServiceImpl implements ApplicationService {
             throw new IllegalArgumentException("application not found");
         }
         existing.updateStatus(normalizedStatus);
+        if ("REJECTED".equals(normalizedStatus)) {
+            existing.setRejectionReason(isBlank(reason) ? "未填写拒绝原因" : reason.trim());
+        } else {
+            existing.setRejectionReason(null);
+        }
         applicationRepository.update(existing);
     }
 

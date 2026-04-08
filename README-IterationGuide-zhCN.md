@@ -37,9 +37,9 @@
 ### 3.1 包结构（以 `src/main/java/com/bupt/is/` 为根）
 
 - `controller/`
-  - `AuthController`：`/auth/login`、`/auth/logout`
-  - `UserController`：`/user/register`、`/user/profile`、`/user/cv/upload`
-  - `JobController`：`/jobs`、`/jobs/detail`、`/jobs/post`
+  - `AuthController`：`/auth/select-role`、`/auth/login`、`/auth/logout`
+  - `UserController`：`/user/register`、`/user/profile`、`/user/cv/upload`、`/user/cv/delete`
+  - `JobController`：`/jobs`、`/jobs/detail`、`/jobs/post`、`/jobs/applicants`、`/jobs/applicant-detail`
   - `ApplicationController`：TA 在岗位详情页提交申请（`/applications/apply`）
   - `CvDownloadController`：`/files/cv?cvPath=...` 读取 PDF
 - `service/`
@@ -87,13 +87,16 @@
 
 ### 5.1 URL 总览（你可以把它当作流程地图）
 
-- 首页/迭代概览：`/`
-- 登录页：`/login.jsp`
+- 首页：`/`
+- 角色选择页：`/role_select.jsp`（或 `/auth/select-role?role=TA|MO|ADMIN`）
+- 登录页：`/login.jsp`（需先选择角色）
 - 创建账号/档案：`/register.jsp`
 - 登录后查看/编辑档案 & 上传 CV：`/user/profile`、`/user/cv/upload`
-- 岗位列表（TA/MO 都可看）：`/jobs`
+- 岗位页（按角色显示不同首页卡片）：`/jobs`
 - 岗位详情（TA 申请 / MO 查看申请者简历）：`/jobs/detail?jobId=...`
 - MO 发布岗位：`/jobs/post`
+- MO 申请者列表：`/jobs/applicants?jobId=...`
+- MO 申请者详情：`/jobs/applicant-detail?jobId=...&applicantId=...`
 - 下载/预览 CV：`/files/cv?cvPath=...`
 - 退出：`/auth/logout`
 
@@ -103,12 +106,12 @@
 2. 创建一个 **TA** 用户：
    - 角色选择：`TA`
    - 填写：用户名、密码、邮箱、姓名、学号
-3. 回到登录页：`/login.jsp` 登录该 TA
+3. 打开角色选择页后选择身份（如 TA），再到登录页登录：`/role_select.jsp` -> `/login.jsp`
 4. 再注册一个 **MO** 用户：
    - 角色选择：`MO`
    - 同样填：用户名、密码、邮箱、姓名、学号
 
-> 登录是否成功完全取决于你注册时写入 `users.json` 的内容（因此不存在“默认用户名/密码”）。
+> 登录是否成功取决于账号密码与角色是否匹配。系统会校验“所选登录角色”与用户角色一致（不存在默认用户名/密码）。
 
 ### 5.3 第二步：TA 上传 CV（覆盖 Story3/4/5）
 
@@ -141,20 +144,21 @@ MO 登录后进入：`/jobs/post`
 
 ### 5.5 第四步：TA 查看岗位并申请（覆盖 Story6 / Story8 / Story12）
 
-TA 打开 ` /jobs ` 列表：
+TA 登录后在 ` /jobs ` 主页点击“搜索岗位”进入岗位搜索页（含搜索框+岗位卡片）：
 
 1. 点击“查看详情”进入：`/jobs/detail?jobId=...`
 2. 若岗位状态为 `OPEN`，页面会显示“申请该岗位（Story8）”
 3. 点击后提交申请（后端会做“重复申请校验”与“CV 必须存在”的校验）
 
-申请成功后页面会回到岗位列表并提示“申请已提交（Story8）”。
+申请成功后会进入“我的申请”列表并显示提交结果。
 
-### 5.6 第五步：MO 在岗位详情查看申请者简历（覆盖 Story5 的“MO 可查看”需求）
+### 5.6 第五步：MO 管理申请者（查看详情 + 录用/拒绝）
 
-MO 在 ` /jobs/detail?jobId=... ` 页面（同一个岗位详情）会看到：
+MO 在 ` /jobs ` 主页点击“管理申请者”，进入岗位卡片列表后点击“管理申请者”：
 
-- 申请者列表（演示用）
-- 若申请者上传过 CV，会提供“查看/下载简历 PDF”的链接
+- 申请者列表页：`/jobs/applicants?jobId=...`（含 Detail / Accept / Reject）
+- 点击 Detail 进入：`/jobs/applicant-detail?...`，可查看申请者详细资料与简历
+- Reject 需要填写原因；原因会同步显示在 TA 的“我的申请”页面
 
 ---
 
@@ -188,8 +192,8 @@ MO 在 ` /jobs/detail?jobId=... ` 页面（同一个岗位详情）会看到：
   - Story26：申请数据以 `applications.json` 形式持久化
 
 - 仍可能缺口（建议你后续对照验收表逐项确认）：
-  - Admin 的“工作量查看/分配公平”相关 UI 与 service 目前尚未实现为完整页面
-  - MO 对申请状态进行“录用/拒绝/更新状态”的管理页面目前未在迭代 1 的最小交互里完整覆盖
+  - Admin 的三卡片入口（Workload Overview / All Applications / Workload Reports）目前是 UI 入口，占位为主，未全部接入完整业务页面
+  - Workload 相关统计与分配公平逻辑仍待完善
 
 如果你要继续推进 iteration2/3，我建议你把“缺口对应的 story acceptance criteria”逐条落到具体页面/接口上，然后我们再补齐。
 

@@ -3,7 +3,7 @@
         <html>
 
         <head>
-            <title>岗位申请者列表</title>
+            <title>Job Applicant List</title>
             <style>
                 body {
                     font-family: Arial, sans-serif;
@@ -50,25 +50,25 @@
         </head>
 
         <body>
-            <h2>岗位申请者列表</h2>
+            <h2>Job Applicant List</h2>
 
             <table>
                 <tr>
-                    <th>申请者ID</th>
-                    <th>姓名</th>
-                    <th>个人简介</th>
-                    <th>操作</th>
+                    <th>Applicant ID</th>
+                    <th>Name</th>
+                    <th>Profile</th>
+                    <th>Action</th>
                 </tr>
                 <c:choose>
-                    <%-- 无申请者时的提示 --%>
+                    <%-- Message when no applicants --%>
                         <c:when test="${empty applicants}">
                             <tr>
                                 <td colspan="4" style="text-align: center; color: #666;">
-                                    该岗位暂无申请者
+                                    No applicants for this job
                                 </td>
                             </tr>
                         </c:when>
-                        <%-- 有申请者时遍历显示 --%>
+                        <%-- Iterate and display applicants --%>
                             <c:otherwise>
                                 <c:forEach var="applicant" items="${applicants}">
                                     <tr>
@@ -76,10 +76,10 @@
                                         <td>${applicant.name}</td>
                                         <td>${applicant.profile}</td>
                                         <td>
-                                            <%-- 查看简历链接，对应Controller的handleApplicantCvRequest方法 --%>
+                                            <%-- CV link handled by handleApplicantCvRequest --%>
                                                 <a href="${pageContext.request.contextPath}/applicants/cv?applicantId=${applicant.applicantId}"
                                                     target="_blank">
-                                                    查看简历
+                                                    View CV
                                                 </a>
                                         </td>
                                     </tr>
@@ -89,7 +89,7 @@
             </table>
 
             <div class="back-link">
-                <a href="${pageContext.request.contextPath}/jobPostings">返回岗位列表</a>
+                <a href="${pageContext.request.contextPath}/jobPostings">Back to Job List</a>
             </div>
         </body>
 

@@ -104,6 +104,7 @@ public class ApplicationController extends HttpServlet {
         String appId = request.getParameter("appId");
         String status = request.getParameter("status");
         String jobId = request.getParameter("jobId");
+        String reason = request.getParameter("reason");
         if (appId == null || status == null || jobId == null) {
             response.sendError(400);
             return;
@@ -122,10 +123,10 @@ public class ApplicationController extends HttpServlet {
         }
 
         try {
-            applicationService.updateStatus(appId, status);
-            response.sendRedirect(request.getContextPath() + "/jobs/detail?jobId=" + jobId + "&statusUpdated=1");
+            applicationService.updateStatus(appId, status, reason);
+            response.sendRedirect(request.getContextPath() + "/jobs/applicants?jobId=" + jobId + "&statusUpdated=1");
         } catch (IllegalArgumentException e) {
-            response.sendRedirect(request.getContextPath() + "/jobs/detail?jobId=" + jobId + "&statusError=1");
+            response.sendRedirect(request.getContextPath() + "/jobs/applicants?jobId=" + jobId + "&statusError=1");
         }
     }
 
@@ -155,7 +156,8 @@ public class ApplicationController extends HttpServlet {
                     title,
                     module,
                     application.getStatus(),
-                    application.getAppliedAt()
+                    application.getAppliedAt(),
+                    application.getRejectionReason()
             ));
         }
 

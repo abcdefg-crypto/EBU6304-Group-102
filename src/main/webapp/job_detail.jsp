@@ -3,7 +3,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>岗位详情 - TA Recruitment System</title>
+    <title>Job Detail - TA Recruitment System</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; background: #f5f7fb; }
         header { background: #1f3c88; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
@@ -27,18 +27,28 @@
 <body>
 <header>
     <div>
-        <strong>岗位详情</strong>
-        <span style="margin-left:10px;font-size:13px;opacity:0.9;">角色：<%= request.getAttribute("role") %></span>
+        <strong>Job Detail</strong>
+        <span style="margin-left:10px;font-size:13px;opacity:0.9;">Role: <%= request.getAttribute("role") %></span>
     </div>
     <div>
         <%
             String role = (String) request.getAttribute("role");
+            String fromParam = request.getParameter("from");
+            String referer = request.getHeader("Referer");
+            boolean fromApplications = "applications".equals(fromParam)
+                    || (referer != null && referer.contains("/applications"));
         %>
-        <a href="<%=request.getContextPath()%>/jobs">返回岗位列表</a>
         <% if ("TA".equals(role)) { %>
-            <a href="<%=request.getContextPath()%>/applications">我的申请</a>
+            <% if (fromApplications) { %>
+                <a href="<%=request.getContextPath()%>/applications">Back to Application List</a>
+            <% } else { %>
+                <a href="<%=request.getContextPath()%>/jobs?view=search">Back to Job List</a>
+            <% } %>
+            <a href="<%=request.getContextPath()%>/jobs">Back to Home</a>
+        <% } else { %>
+            <a href="<%=request.getContextPath()%>/jobs">Back to Job List</a>
         <% } %>
-        <a href="<%=request.getContextPath()%>/auth/logout">退出</a>
+        <a href="<%=request.getContextPath()%>/auth/logout">Logout</a>
     </div>
 </header>
 
@@ -57,25 +67,25 @@
     <% } %>
     <% if ("1".equals(statusUpdated)) { %>
         <div style="background:#dcfce7;color:#166534;padding:10px;border-radius:10px;font-size:13px;margin-bottom:14px;">
-            申请状态已更新。
+            Application status updated.
         </div>
     <% } %>
     <% if ("1".equals(statusError)) { %>
-        <div class="error">状态更新失败，请重试。</div>
+        <div class="error">Status update failed. Please try again.</div>
     <% } %>
 
     <div class="grid">
         <div class="card">
             <div class="tag"><%= job != null ? job.getStatus() : "" %></div>
             <h2 style="font-size:18px;margin-top:10px;"><%= job != null ? job.getTitle() : "" %></h2>
-            <div class="meta">岗位 ID：<%= job != null ? job.getJobId() : "" %></div>
-            <div class="meta">课程/模块：<%= job != null ? job.getModule() : "" %></div>
-            <div class="meta">最大人数：<%= job != null ? job.getMaxApplicants() : "" %></div>
+            <div class="meta">Job ID: <%= job != null ? job.getJobId() : "" %></div>
+            <div class="meta">Module: <%= job != null ? job.getModule() : "" %></div>
+            <div class="meta">Max Applicants: <%= job != null ? job.getMaxApplicants() : "" %></div>
 
-            <div class="meta" style="margin-top:12px;"><strong>岗位描述</strong></div>
+            <div class="meta" style="margin-top:12px;"><strong>Job Description</strong></div>
             <div class="meta" style="white-space:pre-wrap;"><%= job != null ? job.getDescription() : "" %></div>
 
-            <div class="meta" style="margin-top:12px;"><strong>要求与技能</strong></div>
+            <div class="meta" style="margin-top:12px;"><strong>Requirements & Skills</strong></div>
             <ul>
                 <%
                     if (job != null && job.getRequiredSkills() != null) {
@@ -88,26 +98,28 @@
                 %>
             </ul>
 
-            <div class="meta" style="margin-top:12px;"><strong>职责说明</strong></div>
-            <div class="meta">请结合岗位描述与技能要求理解该岗位的 responsibilities。</div>
+            <div class="meta" style="margin-top:12px;"><strong>Responsibilities</strong></div>
+            <div class="meta">Please review responsibilities based on job description and required skills.</div>
 
             <% if (canEditJob && job != null) { %>
                 <div style="margin-top:16px;">
-                    <a class="btn" style="background:#7c3aed;" href="<%=request.getContextPath()%>/jobs/post?jobId=<%= job.getJobId() %>">编辑岗位</a>
+                    <a class="btn" style="background:#7c3aed;" href="<%=request.getContextPath()%>/jobs/post?jobId=<%= job.getJobId() %>">Edit Job</a>
                 </div>
             <% } %>
 
             <% if ("TA".equals(role)) { %>
                 <div style="margin-top:16px;">
                     <% if (hasApplied) { %>
-                        <a class="btn" style="background:#16a34a;" href="<%=request.getContextPath()%>/applications">已申请（查看状态）</a>
+                        <% if (!fromApplications) { %>
+                            <a class="btn" style="background:#16a34a;" href="<%=request.getContextPath()%>/applications">Applied (View Status)</a>
+                        <% } %>
                     <% } else if (canApply) { %>
                         <form action="<%=request.getContextPath()%>/applications/apply" method="post">
                             <input type="hidden" name="jobId" value="<%= job.getJobId() %>">
-                            <button type="submit" class="btn">申请该岗位</button>
+                            <button type="submit" class="btn">Apply for this Job</button>
                         </form>
                     <% } else { %>
-                        <div class="meta">当前岗位不可申请。</div>
+                        <div class="meta">This job is currently not open for application.</div>
                     <% } %>
                 </div>
             <% } %>
@@ -115,8 +127,8 @@
 
         <% if ("MO".equals(role)) { %>
             <div class="card">
-                <h2 style="font-size:16px;margin-top:0;">申请者与简历</h2>
-                <div class="meta">MO 可以查看申请此岗位的候选人及其 PDF 简历。</div>
+                <h2 style="font-size:16px;margin-top:0;">Applicants & CVs</h2>
+                <div class="meta">MO can view applicants and their PDF CVs for this job.</div>
                 <%
                     java.util.List<com.bupt.is.model.Application> applications =
                             (java.util.List<com.bupt.is.model.Application>) request.getAttribute("applications");
@@ -124,7 +136,7 @@
                             (java.util.Map<String, String>) request.getAttribute("applicantNameMap");
                     if (applications == null || applications.isEmpty()) {
                 %>
-                    <div class="meta" style="margin-top:10px;">暂无申请者。</div>
+                    <div class="meta" style="margin-top:10px;">No applicants yet.</div>
                 <%
                     } else {
                         for (com.bupt.is.model.Application a : applications) {
@@ -134,32 +146,32 @@
                             }
                 %>
                     <div class="meta" style="margin-top:12px;">
-                        <strong>申请者：</strong><%= applicantName %>（<%= a.getApplicantId() %>）
+                        <strong>Applicant:</strong> <%= applicantName %> (<%= a.getApplicantId() %>)
                     </div>
-                    <div class="meta"><strong>当前状态：</strong><%= a.getStatus() %></div>
+                    <div class="meta"><strong>Status:</strong> <%= a.getStatus() %></div>
                     <% if (a.getCvPath() == null || a.getCvPath().trim().isEmpty()) { %>
-                        <div class="meta">简历：未上传</div>
+                        <div class="meta">CV: Not uploaded</div>
                     <% } else { %>
-                        <a class="btn" style="background:#0ea5e9;" href="<%=request.getContextPath()%>/files/cv?cvPath=<%=a.getCvPath()%>">查看/下载简历 PDF</a>
+                        <a class="btn" style="background:#0ea5e9;" href="<%=request.getContextPath()%>/files/cv?cvPath=<%=a.getCvPath()%>">View/Download CV PDF</a>
                     <% } %>
                     <div style="margin-top:8px;">
                         <form action="<%=request.getContextPath()%>/applications/status" method="post" style="display:inline;">
                             <input type="hidden" name="jobId" value="<%= job.getJobId() %>">
                             <input type="hidden" name="appId" value="<%= a.getApplicationId() %>">
                             <input type="hidden" name="status" value="ACCEPTED">
-                            <button type="submit" class="btn btn-small btn-accept">录用</button>
+                            <button type="submit" class="btn btn-small btn-accept">Accept</button>
                         </form>
                         <form action="<%=request.getContextPath()%>/applications/status" method="post" style="display:inline;">
                             <input type="hidden" name="jobId" value="<%= job.getJobId() %>">
                             <input type="hidden" name="appId" value="<%= a.getApplicationId() %>">
                             <input type="hidden" name="status" value="REJECTED">
-                            <button type="submit" class="btn btn-small btn-reject">拒绝</button>
+                            <button type="submit" class="btn btn-small btn-reject">Reject</button>
                         </form>
                         <form action="<%=request.getContextPath()%>/applications/status" method="post" style="display:inline;">
                             <input type="hidden" name="jobId" value="<%= job.getJobId() %>">
                             <input type="hidden" name="appId" value="<%= a.getApplicationId() %>">
                             <input type="hidden" name="status" value="PENDING">
-                            <button type="submit" class="btn btn-small btn-pending">设为待定</button>
+                            <button type="submit" class="btn btn-small btn-pending">Set Pending</button>
                         </form>
                     </div>
                 <%

@@ -21,7 +21,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 
-@WebServlet(urlPatterns = {"/user/register", "/user/profile", "/user/cv/upload"})
+@WebServlet(urlPatterns = {"/user/register", "/user/profile", "/user/cv/upload", "/user/cv/delete"})
 @MultipartConfig(
         fileSizeThreshold = 1024 * 1024, // 1MB
         maxFileSize = 10 * 1024 * 1024,  // 10MB
@@ -49,6 +49,7 @@ public class UserController extends HttpServlet {
                 case "/user/register" -> doRegister(request, response);
                 case "/user/profile" -> doProfilePost(request, response);
                 case "/user/cv/upload" -> doCvUpload(request, response);
+                case "/user/cv/delete" -> doCvDelete(request, response);
                 default -> response.sendError(404);
             }
         } catch (IllegalArgumentException e) {
@@ -87,12 +88,12 @@ public class UserController extends HttpServlet {
 
         Part cvPart = request.getPart("cv");
         if (cvPart == null || cvPart.getSize() <= 0) {
-            throw new IllegalArgumentException("请选择要上传的文件");
+            throw new IllegalArgumentException("Please select a file to upload");
         }
 
         String submittedName = cvPart.getSubmittedFileName();
         if (submittedName == null || !submittedName.toLowerCase().endsWith(".pdf")) {
-            throw new IllegalArgumentException("Story 5 要求：仅支持 PDF 格式");
+            throw new IllegalArgumentException("Only PDF format is supported");
         }
 
         String fileName = userId + ".pdf";
@@ -107,6 +108,27 @@ public class UserController extends HttpServlet {
         String relativePath = "cv/" + fileName;
         userService.uploadCv(userId, relativePath);
         response.sendRedirect(request.getContextPath() + "/user/profile?cv=1");
+    }
+
+    private void doCvDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        HttpSession session = request.getSession(false);
+        String userId = (String) session.getAttribute("userId");
+        User existing = userService.findById(userId);
+        if (existing == null) {
+            response.sendRedirect(request.getContextPath() + "/login.jsp?error=1");
+            return;
+        }
+
+        String cvPath = existing.getCvPath();
+        if (cvPath != null && !cvPath.trim().isEmpty()) {
+            Path filePath = Paths.get("data").toAbsolutePath().normalize().resolve(cvPath).normalize();
+            if (filePath.startsWith(Paths.get("data").toAbsolutePath().normalize())) {
+                Files.deleteIfExists(filePath);
+            }
+        }
+
+        userService.uploadCv(userId, null);
+        response.sendRedirect(request.getContextPath() + "/user/profile?cvDeleted=1");
     }
 
     private void doRegister(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

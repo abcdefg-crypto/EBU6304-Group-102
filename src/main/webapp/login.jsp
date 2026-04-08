@@ -3,7 +3,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>登录 - TA Recruitment System</title>
+    <title>Login - TA Recruitment System</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -81,51 +81,69 @@
             color: #2563eb;
             text-decoration: none;
         }
+        .link-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .link-row .back-link {
+            margin-top: 0;
+        }
+        .back-link-home {
+            margin-left: auto;
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>系统登录</h1>
-    <p class="subtitle">用于演示 Iteration 1 的认证与角色识别。</p>
+    <h1>System Login</h1>
 
     <%
         String error = (String) request.getAttribute("error");
         String registered = request.getParameter("registered");
         String errorParam = request.getParameter("error");
+        String selectedRole = null;
+        if (session != null) {
+            selectedRole = (String) session.getAttribute("selectedRole");
+        }
     %>
+    <% if (selectedRole != null && !selectedRole.isEmpty()) { %>
+    <div style="background:#e0ecff;color:#1d4ed8;padding:10px;border-radius:10px;font-size:13px;margin-bottom:14px;">
+        Selected role: <strong><%= selectedRole %></strong>
+    </div>
+    <% } %>
     <% if (error != null) { %>
     <div style="background:#fee2e2;color:#991b1b;padding:10px;border-radius:10px;font-size:13px;margin-bottom:14px;">
         <%= error %>
     </div>
     <% } else if ("1".equals(registered)) { %>
     <div style="background:#dcfce7;color:#166534;padding:10px;border-radius:10px;font-size:13px;margin-bottom:14px;">
-        注册成功，请登录。
+        Registration successful. Please log in.
     </div>
     <% } else if ("1".equals(errorParam)) { %>
     <div style="background:#fee2e2;color:#991b1b;padding:10px;border-radius:10px;font-size:13px;margin-bottom:14px;">
-        登录失败，请重试。
+        Login failed. Please try again.
     </div>
     <% } %>
 
     <form action="auth/login" method="post">
         <div class="field">
-            <label for="username">用户名</label>
+            <label for="username">Username</label>
             <input id="username" name="username" type="text" required>
         </div>
         <div class="field">
-            <label for="password">密码</label>
+            <label for="password">Password</label>
             <input id="password" name="password" type="password" required>
         </div>
-        <button type="submit" class="btn">登录</button>
+        <button type="submit" class="btn">Login</button>
     </form>
 
-    <p class="hint">
-        后续可以根据登录结果跳转到不同角色的首页：<br>
-        TA → 申请岗位视图；MO → 岗位发布视图；Admin → 工作量总览视图。
-    </p>
-
-    <a href="register.jsp" class="back-link">还没有账号？去创建档案</a>
-    <a href="index.jsp" class="back-link">返回 Iteration 1 总览</a>
+    <div class="link-row">
+        <a href="role_select.jsp" class="back-link">Switch role</a>
+        <a href="register.jsp" class="back-link">No account? Create profile</a>
+        <a href="index.jsp" class="back-link back-link-home">Back to Home</a>
+    </div>
 </div>
 </body>
 </html>

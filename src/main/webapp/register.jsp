@@ -3,7 +3,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>创建档案 - TA Recruitment System</title>
+    <title>Create Profile - TA Recruitment System</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -63,8 +63,7 @@
 </head>
 <body>
 <div class="container">
-    <h1>创建申请者档案</h1>
-    <p class="subtitle">Iteration 1：为登录创建用户，并填写姓名/邮箱/学号。</p>
+    <h1>Create Profile</h1>
 
     <%
         String error = (String) request.getAttribute("error");
@@ -75,39 +74,38 @@
 
     <form action="user/register" method="post">
         <div class="field">
-            <label>用户名</label>
+            <label>Username</label>
             <input type="text" name="username" required>
         </div>
         <div class="field">
-            <label>密码</label>
+            <label>Password</label>
             <input type="password" name="password" required>
         </div>
         <div class="field">
-            <label>邮箱</label>
+            <label>Email</label>
             <input type="email" name="email" required>
         </div>
         <div class="field">
-            <label>姓名（档案必填）</label>
+            <label>Name (required)</label>
             <input type="text" name="name" required>
         </div>
         <div class="field">
-            <label>学号（档案必填）</label>
+            <label>Student ID (required)</label>
             <input type="text" name="studentId" required>
         </div>
         <div class="field">
-            <label>角色</label>
+            <label>Role</label>
             <select name="role">
-                <option value="TA" selected>TA（申请者）</option>
-                <option value="MO">MO（课程负责人）</option>
-                <option value="ADMIN">Admin（演示用）</option>
+                <option value="TA" selected>TA (Applicant)</option>
+                <option value="MO">MO (Module Owner)</option>
+                <option value="ADMIN">Admin</option>
             </select>
         </div>
 
-        <button type="submit" class="btn">创建并返回登录</button>
+        <button type="submit" class="btn">Create</button>
     </form>
 
-    <a href="login.jsp" class="back-link">返回登录</a>
-    <a href="index.jsp" class="back-link">返回 Iteration 1 总览</a>
+    <a href="index.jsp" class="back-link">Back to Home</a>
 </div>
 </body>
 </html>

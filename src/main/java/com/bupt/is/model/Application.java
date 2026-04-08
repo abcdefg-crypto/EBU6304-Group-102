@@ -10,6 +10,7 @@ public class Application {
     private String cvPath;
     private String appliedAt;
     private int score;
+    private String rejectionReason;
 
     public Application() {}
 
@@ -34,6 +35,9 @@ public class Application {
 
     public int getScore() { return score; }
     public void setScore(int score) { this.score = score; }
+
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
 
     // ===== Business Methods =====
     public void updateStatus(String status) {

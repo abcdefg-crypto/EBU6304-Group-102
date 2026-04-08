@@ -7,14 +7,16 @@ public class ApplicationView {
     private final String module;
     private final String status;
     private final String appliedAt;
+    private final String rejectionReason;
 
-    public ApplicationView(String applicationId, String jobId, String jobTitle, String module, String status, String appliedAt) {
+    public ApplicationView(String applicationId, String jobId, String jobTitle, String module, String status, String appliedAt, String rejectionReason) {
         this.applicationId = applicationId;
         this.jobId = jobId;
         this.jobTitle = jobTitle;
         this.module = module;
         this.status = status;
         this.appliedAt = appliedAt;
+        this.rejectionReason = rejectionReason;
     }
 
     public String getApplicationId() {
@@ -39,5 +41,9 @@ public class ApplicationView {
 
     public String getAppliedAt() {
         return appliedAt;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
     }
 }
