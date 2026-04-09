@@ -56,8 +56,8 @@
 <div class="container">
     <h1>TA Recruitment System</h1>
     <div class="actions">
-        <a href="role_select.jsp" class="btn btn-primary">Login</a>
-        <a href="register.jsp" class="btn btn-outline">Register</a>
+        <a href="<%=request.getContextPath()%>/role_select.jsp" class="btn btn-primary">Login</a>
+        <a href="<%=request.getContextPath()%>/register.jsp" class="btn btn-outline">Register</a>
     </div>
 </div>
 </body>

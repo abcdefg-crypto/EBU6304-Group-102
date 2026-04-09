@@ -72,7 +72,7 @@
     <div class="error"><%= error %></div>
     <% } %>
 
-    <form action="user/register" method="post">
+    <form action="<%=request.getContextPath()%>/user/register" method="post">
         <div class="field">
             <label>Username</label>
             <input type="text" name="username" required>
@@ -105,7 +105,7 @@
         <button type="submit" class="btn">Create</button>
     </form>
 
-    <a href="index.jsp" class="back-link">Back to Home</a>
+    <a href="<%=request.getContextPath()%>/index.jsp" class="back-link">Back to Home</a>
 </div>
 </body>
 </html>

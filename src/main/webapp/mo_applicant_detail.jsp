@@ -29,6 +29,22 @@
         .action-bar { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
         .btn-primary { background:#2563eb; color:#fff; border:none; }
         .top-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 8px 0 12px; }
+        .status-tag { display:inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .status-pending { background:#e5e7eb; color:#374151; }
+        .status-accepted { background:#dcfce7; color:#166534; }
+        .status-rejected { background:#fee2e2; color:#991b1b; }
+        .cv-layout { display: flex; gap: 14px; align-items: stretch; margin-top: 6px; }
+        .cv-left { flex: 1; min-width: 280px; }
+        .cv-right { width: 420px; max-width: 48%; }
+        .pdf-preview { height: 360px; border: 1px solid #e1e5f2; border-radius: 10px; background: #fff; overflow-y: auto; overflow-x: hidden; }
+        .pdf-preview iframe { width: 100%; height: 100%; border: 0; display: block; }
+        @media (max-width: 920px) { .cv-layout { flex-direction: column; } .cv-right { width: 100%; max-width: 100%; } }
+        .modal-mask { position: fixed; inset: 0; background: rgba(15,23,42,.55); display:none; align-items:center; justify-content:center; padding: 18px; z-index: 9999; }
+        .modal { width: 520px; max-width: 100%; background:#fff; border-radius: 14px; box-shadow: 0 20px 60px rgba(15,23,42,.35); padding: 16px; }
+        .modal h3 { margin: 0 0 10px; font-size: 16px; color:#111827; }
+        .modal textarea { width: 100%; min-height: 110px; border-radius: 10px; border:1px solid #d1d5db; padding: 10px; font-size: 13px; box-sizing: border-box; resize: vertical; }
+        .modal-actions { display:flex; gap: 10px; justify-content:flex-end; margin-top: 12px; }
+        .btn-danger { background:#dc2626; color:#fff; border:none; }
     </style>
 </head>
 <body>
@@ -60,25 +76,49 @@
         <input type="text" readonly value="<%= job != null ? job.getTitle() : "-" %>">
 
         <label>Status</label>
-        <input type="text" readonly value="<%= appInfo != null ? appInfo.getStatus() : "-" %>">
+        <%
+            String s0 = appInfo != null && appInfo.getStatus() != null ? appInfo.getStatus().trim().toUpperCase() : "PENDING";
+            String statusClass = "status-pending";
+            if ("ACCEPTED".equals(s0)) statusClass = "status-accepted";
+            else if ("REJECTED".equals(s0)) statusClass = "status-rejected";
+        %>
+        <div>
+            <span class="status-tag <%= statusClass %>"><%= s0 %></span>
+        </div>
 
         <label>Applied Date</label>
         <input type="text" readonly value="<%= appInfo != null ? appInfo.getAppliedAt() : "-" %>">
 
-        <div class="top-summary">
-            <div>
+        <div class="cv-layout">
+            <div class="cv-left">
                 <label>CV</label>
-                <div>
+                <div style="margin-bottom: 10px;">
                     <% if (applicant != null && applicant.getCvPath() != null && !applicant.getCvPath().trim().isEmpty()) { %>
-                        <a class="btn" href="<%=request.getContextPath()%>/files/cv?cvPath=<%=applicant.getCvPath()%>">View CV PDF</a>
+                        <a class="btn" href="<%=request.getContextPath()%>/files/cv?cvPath=<%=applicant.getCvPath()%>" target="_blank">Open PDF</a>
+                        <a class="btn" href="<%=request.getContextPath()%>/files/cv?cvPath=<%=applicant.getCvPath()%>&download=1">Download PDF</a>
                     <% } else { %>
                         <span class="muted">Not uploaded</span>
                     <% } %>
                 </div>
-            </div>
-            <div>
+
                 <label>System Match Score</label>
                 <input type="text" readonly value="">
+            </div>
+
+            <div class="cv-right">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <strong>Preview</strong>
+                    <% if (applicant != null && applicant.getCvPath() != null && !applicant.getCvPath().trim().isEmpty()) { %>
+                        <a class="muted" style="text-decoration:none;" href="<%=request.getContextPath()%>/files/cv?cvPath=<%=applicant.getCvPath()%>" target="_blank">Open in new tab</a>
+                    <% } %>
+                </div>
+                <div class="pdf-preview">
+                    <% if (applicant == null || applicant.getCvPath() == null || applicant.getCvPath().trim().isEmpty()) { %>
+                        <div class="muted" style="padding:12px;">No CV uploaded yet.</div>
+                    <% } else { %>
+                        <iframe src="<%=request.getContextPath()%>/files/cv?cvPath=<%=applicant.getCvPath()%>#toolbar=0&navpanes=0"></iframe>
+                    <% } %>
+                </div>
             </div>
         </div>
 
@@ -111,29 +151,65 @@
                 <input type="hidden" name="status" value="ACCEPTED">
                 <button type="submit" class="btn btn-primary" style="width:100%;">Accept</button>
             </form>
-            <form action="<%=request.getContextPath()%>/applications/status" method="post" style="width:100%;" onsubmit="return submitRejectWithReason(this);">
+            <form action="<%=request.getContextPath()%>/applications/status" method="post" style="width:100%;" class="reject-form">
                 <input type="hidden" name="jobId" value="<%= job != null ? job.getJobId() : "" %>">
                 <input type="hidden" name="appId" value="<%= appInfo != null ? appInfo.getApplicationId() : "" %>">
                 <input type="hidden" name="status" value="REJECTED">
                 <input type="hidden" name="reason" value="">
-                <button type="submit" class="btn" style="width:100%;">Reject</button>
+                <button type="button" class="btn" style="width:100%;" onclick="openRejectModal(this.form)">Reject</button>
             </form>
         </div>
 
     </div>
 </main>
+<div id="rejectModalMask" class="modal-mask" role="dialog" aria-modal="true">
+    <div class="modal">
+        <h3>Please enter rejection reason:</h3>
+        <textarea id="rejectReasonInput" placeholder="Type the reason here..."></textarea>
+        <div class="modal-actions">
+            <button type="button" class="btn" onclick="closeRejectModal()">Cancel</button>
+            <button type="button" class="btn btn-danger" onclick="confirmReject()">Confirm</button>
+        </div>
+    </div>
+</div>
 <script>
-    function submitRejectWithReason(form) {
-        var reason = window.prompt("Please enter rejection reason:", "");
-        if (reason === null) return false;
-        reason = reason.trim();
-        if (!reason) {
-            window.alert("Rejection reason cannot be empty");
-            return false;
-        }
-        form.querySelector('input[name="reason"]').value = reason;
-        return true;
+    var __rejectForm = null;
+    function openRejectModal(form) {
+        __rejectForm = form;
+        var mask = document.getElementById("rejectModalMask");
+        var input = document.getElementById("rejectReasonInput");
+        if (!mask || !input) return;
+        input.value = "";
+        mask.style.display = "flex";
+        setTimeout(function () { input.focus(); }, 0);
     }
+    function closeRejectModal() {
+        var mask = document.getElementById("rejectModalMask");
+        if (mask) mask.style.display = "none";
+        __rejectForm = null;
+    }
+    function confirmReject() {
+        if (!__rejectForm) return;
+        var input = document.getElementById("rejectReasonInput");
+        var reason = input ? input.value.trim() : "";
+        if (!reason) {
+            if (input) input.focus();
+            return;
+        }
+        var hidden = __rejectForm.querySelector('input[name="reason"]');
+        if (hidden) hidden.value = reason;
+        __rejectForm.submit();
+    }
+    (function () {
+        var mask = document.getElementById("rejectModalMask");
+        if (!mask) return;
+        mask.addEventListener("click", function (e) {
+            if (e.target === mask) closeRejectModal();
+        });
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") closeRejectModal();
+        });
+    })();
 </script>
 </body>
 </html>

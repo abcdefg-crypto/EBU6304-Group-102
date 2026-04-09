@@ -36,6 +36,12 @@ public class JobServiceImpl implements JobService {
             job.setJobId(com.bupt.is.util.IdGenerator.generateJobId());
         }
 
+        // Prevent duplicates: same title + same module (case-insensitive, trimmed).
+        // This avoids confusing "same job posted twice" situations.
+        if (existsSameTitleAndModule(null, job.getTitle(), job.getModule())) {
+            throw new IllegalArgumentException("A job with the same Job Title and Module already exists. Please change the Job Title or Module.");
+        }
+
         job.setPostedBy(mo.getId());
         job.setStatus("OPEN");
         jobRepository.save(job);
@@ -64,6 +70,10 @@ public class JobServiceImpl implements JobService {
         }
         if (job.getRequiredSkills() == null || job.getRequiredSkills().isEmpty()) {
             throw new IllegalArgumentException("requiredSkills are required");
+        }
+
+        if (existsSameTitleAndModule(job.getJobId(), job.getTitle(), job.getModule())) {
+            throw new IllegalArgumentException("A job with the same Job Title and Module already exists. Please change the Job Title or Module.");
         }
 
         job.setPostedBy(existing.getPostedBy());
@@ -104,6 +114,28 @@ public class JobServiceImpl implements JobService {
 
     private static boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
+    }
+
+    private boolean existsSameTitleAndModule(String excludeJobId, String title, String module) {
+        String t = title == null ? "" : title.trim().toLowerCase();
+        String m = module == null ? "" : module.trim().toLowerCase();
+        if (t.isEmpty() || m.isEmpty()) {
+            return false;
+        }
+        for (Job j : jobRepository.findAll()) {
+            if (j == null) {
+                continue;
+            }
+            if (excludeJobId != null && Objects.equals(excludeJobId, j.getJobId())) {
+                continue;
+            }
+            String jt = j.getTitle() == null ? "" : j.getTitle().trim().toLowerCase();
+            String jm = j.getModule() == null ? "" : j.getModule().trim().toLowerCase();
+            if (t.equals(jt) && m.equals(jm)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
 

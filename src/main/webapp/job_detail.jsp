@@ -20,6 +20,10 @@
         .btn-accept { background:#16a34a; }
         .btn-reject { background:#dc2626; }
         .btn-pending { background:#6b7280; }
+        .status-tag { display:inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .status-pending { background:#e5e7eb; color:#374151; }
+        .status-accepted { background:#dcfce7; color:#166534; }
+        .status-rejected { background:#fee2e2; color:#991b1b; }
         ul { margin: 6px 0 0 18px; padding: 0; }
         li { color:#4b5563; font-size: 13px; margin-bottom: 4px; }
     </style>
@@ -148,7 +152,16 @@
                     <div class="meta" style="margin-top:12px;">
                         <strong>Applicant:</strong> <%= applicantName %> (<%= a.getApplicantId() %>)
                     </div>
-                    <div class="meta"><strong>Status:</strong> <%= a.getStatus() %></div>
+                    <div class="meta">
+                        <strong>Status:</strong>
+                        <%
+                            String s0 = a.getStatus() == null ? "PENDING" : a.getStatus().trim().toUpperCase();
+                            String statusClass = "status-pending";
+                            if ("ACCEPTED".equals(s0)) statusClass = "status-accepted";
+                            else if ("REJECTED".equals(s0)) statusClass = "status-rejected";
+                        %>
+                        <span class="status-tag <%= statusClass %>"><%= s0 %></span>
+                    </div>
                     <% if (a.getCvPath() == null || a.getCvPath().trim().isEmpty()) { %>
                         <div class="meta">CV: Not uploaded</div>
                     <% } else { %>

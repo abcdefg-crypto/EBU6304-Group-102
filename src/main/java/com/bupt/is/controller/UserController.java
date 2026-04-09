@@ -152,7 +152,11 @@ public class UserController extends HttpServlet {
         user.setRoles(roleToRoles(role));
 
         userService.createProfile(user);
-        response.sendRedirect(request.getContextPath() + "/login.jsp?registered=1");
+        // After registration, always go through role selection first.
+        // This avoids "Please select a login role first" on the login endpoint.
+        HttpSession session = request.getSession(true);
+        session.removeAttribute("selectedRole");
+        response.sendRedirect(request.getContextPath() + "/role_select.jsp");
     }
 
     private void doProfileGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

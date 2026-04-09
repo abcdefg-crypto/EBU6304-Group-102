@@ -18,14 +18,34 @@
         .btn-primary { background: #2563eb; color: #fff; }
         .btn-outline { background: #fff; color: #2563eb; border: 1px solid #cbd5f5; }
         .file-input-native { display: none; }
-        .file-picker { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-        .file-picker-btn { border-radius: 999px; padding: 8px 14px; border: 1px solid #cbd5f5; background:#fff; color:#2563eb; font-size: 13px; cursor: pointer; }
+        .upload-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .file-name { color:#6b7280; font-size: 13px; }
         .error { background: #fee2e2; color: #991b1b; padding: 10px; border-radius: 10px; font-size: 13px; margin-bottom: 14px; }
         .success { background: #dcfce7; color: #166534; padding: 10px; border-radius: 10px; font-size: 13px; margin-bottom: 14px; }
         .muted { color: #6b7280; font-size: 13px; }
         ul { margin: 8px 0 0 18px; padding: 0; }
         li { color: #4b5563; font-size: 13px; margin-bottom: 4px; }
+        .cv-layout { display: flex; gap: 14px; align-items: stretch; }
+        .cv-left { flex: 1; min-width: 300px; }
+        .cv-right { width: 420px; max-width: 48%; }
+        .pdf-preview {
+            height: 320px;
+            border: 1px solid #e1e5f2;
+            border-radius: 10px;
+            background: #fff;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        .pdf-preview iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            display: block;
+        }
+        @media (max-width: 920px) {
+            .cv-layout { flex-direction: column; }
+            .cv-right { width: 100%; max-width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -63,27 +83,57 @@
     <div class="grid">
         <div class="card">
             <h2 style="font-size:16px;margin-top:0;">Upload CV</h2>
-            <div style="margin-bottom:12px;">
-                <strong>Current CV:</strong>
-                <% if (cvPath == null || cvPath.trim().isEmpty()) { %>
-                    <span class="muted">Not uploaded</span>
-                <% } else { %>
-                    <a href="<%=request.getContextPath()%>/files/cv?cvPath=<%=cvPath%>">View/Download PDF</a>
-                <% } %>
-            </div>
-            <form action="<%=request.getContextPath()%>/user/cv/upload" method="post" enctype="multipart/form-data">
-                <input id="cvFile" class="file-input-native" type="file" name="cv" accept=".pdf" required>
-                <div class="file-picker">
-                    <label for="cvFile" class="file-picker-btn">Choose File</label>
-                    <span id="cvFileName" class="file-name">No file chosen</span>
+            <div class="cv-layout">
+                <div class="cv-left">
+                    <div style="margin-bottom:12px;">
+                        <strong>Current CV:</strong>
+                        <% if (cvPath == null || cvPath.trim().isEmpty()) { %>
+                            <span class="muted">Not uploaded</span>
+                        <% } else { %>
+                            <a href="<%=request.getContextPath()%>/files/cv?cvPath=<%=cvPath%>" target="_blank">Open PDF</a>
+                            <span class="muted"> | </span>
+                            <a href="<%=request.getContextPath()%>/files/cv?cvPath=<%=cvPath%>&download=1">Download PDF</a>
+                        <% } %>
+                    </div>
+
+                    <form id="cvUploadForm" action="<%=request.getContextPath()%>/user/cv/upload" method="post" enctype="multipart/form-data">
+                        <input id="cvFile" class="file-input-native" type="file" name="cv" accept=".pdf" required>
+                        <div class="upload-row">
+                            <button id="uploadCvBtn" type="button" class="btn btn-primary">Upload PDF</button>
+                            <span id="cvFileName" class="file-name">No file chosen</span>
+                            <span class="muted" style="font-size:12px;">
+                                <% if (cvPath != null && !cvPath.trim().isEmpty()) { %>
+                                    Uploading a new file will overwrite the old one.
+                                <% } else { %>
+                                    PDF only.
+                                <% } %>
+                            </span>
+                        </div>
+                    </form>
+
+                    <% if (cvPath != null && !cvPath.trim().isEmpty()) { %>
+                        <form action="<%=request.getContextPath()%>/user/cv/delete" method="post" style="margin-top:10px;">
+                            <button type="submit" class="btn btn-outline">Delete Uploaded CV</button>
+                        </form>
+                    <% } %>
                 </div>
-                <button type="submit" class="btn btn-primary">Upload PDF</button>
-            </form>
-            <% if (cvPath != null && !cvPath.trim().isEmpty()) { %>
-                <form action="<%=request.getContextPath()%>/user/cv/delete" method="post" style="margin-top:10px;">
-                    <button type="submit" class="btn btn-outline">Delete Uploaded CV</button>
-                </form>
-            <% } %>
+
+                <div class="cv-right">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                        <strong>Preview</strong>
+                        <% if (cvPath != null && !cvPath.trim().isEmpty()) { %>
+                            <a class="muted" style="text-decoration:none;" href="<%=request.getContextPath()%>/files/cv?cvPath=<%=cvPath%>" target="_blank">Open in new tab</a>
+                        <% } %>
+                    </div>
+                    <div class="pdf-preview">
+                        <% if (cvPath == null || cvPath.trim().isEmpty()) { %>
+                            <div class="muted" style="padding:12px;">No CV uploaded yet.</div>
+                        <% } else { %>
+                            <iframe src="<%=request.getContextPath()%>/files/cv?cvPath=<%=cvPath%>#toolbar=0&navpanes=0"></iframe>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="card">
@@ -120,10 +170,23 @@
     (function () {
         var input = document.getElementById("cvFile");
         var nameText = document.getElementById("cvFileName");
+        var btn = document.getElementById("uploadCvBtn");
+        var form = document.getElementById("cvUploadForm");
         if (!input || !nameText) return;
+
+        if (btn) {
+            btn.addEventListener("click", function () {
+                input.click();
+            });
+        }
+
         input.addEventListener("change", function () {
             if (input.files && input.files.length > 0) {
                 nameText.textContent = input.files[0].name;
+                // Auto submit after picking a PDF (single-button UX).
+                if (form) {
+                    form.submit();
+                }
             } else {
                 nameText.textContent = "No file chosen";
             }

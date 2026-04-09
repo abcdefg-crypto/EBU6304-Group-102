@@ -18,6 +18,16 @@
         .success { background: #dcfce7; color: #166534; padding: 10px 12px; border-radius: 10px; font-size: 13px; margin-bottom: 10px; }
         .error { background: #fee2e2; color: #991b1b; padding: 10px 12px; border-radius: 10px; font-size: 13px; margin-bottom: 10px; }
         .reason-input { width: 220px; padding: 7px 9px; border:1px solid #d1d5db; border-radius:8px; font-size:12px; }
+        .status-tag { display:inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .status-pending { background:#e5e7eb; color:#374151; }
+        .status-accepted { background:#dcfce7; color:#166534; }
+        .status-rejected { background:#fee2e2; color:#991b1b; }
+        .modal-mask { position: fixed; inset: 0; background: rgba(15,23,42,.55); display:none; align-items:center; justify-content:center; padding: 18px; z-index: 9999; }
+        .modal { width: 520px; max-width: 100%; background:#fff; border-radius: 14px; box-shadow: 0 20px 60px rgba(15,23,42,.35); padding: 16px; }
+        .modal h3 { margin: 0 0 10px; font-size: 16px; color:#111827; }
+        .modal textarea { width: 100%; min-height: 110px; border-radius: 10px; border:1px solid #d1d5db; padding: 10px; font-size: 13px; box-sizing: border-box; resize: vertical; }
+        .modal-actions { display:flex; gap: 10px; justify-content:flex-end; margin-top: 12px; }
+        .btn-danger { background:#dc2626; color:#fff; border:none; }
     </style>
 </head>
 <body>
@@ -68,7 +78,15 @@
                 <tr>
                     <td><%= row.get("name") %></td>
                     <td><%= row.get("studentId") %></td>
-                    <td><%= row.get("status") %></td>
+                    <td>
+                        <%
+                            String s0 = row.get("status") == null ? "PENDING" : row.get("status").trim().toUpperCase();
+                            String statusClass = "status-pending";
+                            if ("ACCEPTED".equals(s0)) statusClass = "status-accepted";
+                            else if ("REJECTED".equals(s0)) statusClass = "status-rejected";
+                        %>
+                        <span class="status-tag <%= statusClass %>"><%= s0 %></span>
+                    </td>
                     <td style="white-space: nowrap;">
                         <a class="btn" href="<%=request.getContextPath()%>/jobs/applicant-detail?jobId=<%= job.getJobId() %>&applicantId=<%= row.get("applicantId") %>">Detail</a>
                     </td>
@@ -79,12 +97,12 @@
                             <input type="hidden" name="status" value="ACCEPTED">
                             <button type="submit" class="btn">Accept</button>
                         </form>
-                        <form action="<%=request.getContextPath()%>/applications/status" method="post" style="display:inline;" onsubmit="return submitRejectWithReason(this);">
+                        <form action="<%=request.getContextPath()%>/applications/status" method="post" style="display:inline;" class="reject-form">
                             <input type="hidden" name="jobId" value="<%= job.getJobId() %>">
                             <input type="hidden" name="appId" value="<%= row.get("applicationId") %>">
                             <input type="hidden" name="status" value="REJECTED">
                             <input type="hidden" name="reason" value="">
-                            <button type="submit" class="btn">Reject</button>
+                            <button type="button" class="btn" onclick="openRejectModal(this.form)">Reject</button>
                         </form>
                     </td>
                 </tr>
@@ -93,20 +111,54 @@
         </table>
     <% } %>
 </main>
+<div id="rejectModalMask" class="modal-mask" role="dialog" aria-modal="true">
+    <div class="modal">
+        <h3>Please enter rejection reason:</h3>
+        <textarea id="rejectReasonInput" placeholder="Type the reason here..."></textarea>
+        <div class="modal-actions">
+            <button type="button" class="btn" onclick="closeRejectModal()">Cancel</button>
+            <button type="button" class="btn btn-danger" onclick="confirmReject()">Confirm</button>
+        </div>
+    </div>
+</div>
 <script>
-    function submitRejectWithReason(form) {
-        var reason = window.prompt("Please enter rejection reason:", "");
-        if (reason === null) {
-            return false;
-        }
-        reason = reason.trim();
-        if (!reason) {
-            window.alert("Rejection reason cannot be empty");
-            return false;
-        }
-        form.querySelector('input[name="reason"]').value = reason;
-        return true;
+    var __rejectForm = null;
+    function openRejectModal(form) {
+        __rejectForm = form;
+        var mask = document.getElementById("rejectModalMask");
+        var input = document.getElementById("rejectReasonInput");
+        if (!mask || !input) return;
+        input.value = "";
+        mask.style.display = "flex";
+        setTimeout(function () { input.focus(); }, 0);
     }
+    function closeRejectModal() {
+        var mask = document.getElementById("rejectModalMask");
+        if (mask) mask.style.display = "none";
+        __rejectForm = null;
+    }
+    function confirmReject() {
+        if (!__rejectForm) return;
+        var input = document.getElementById("rejectReasonInput");
+        var reason = input ? input.value.trim() : "";
+        if (!reason) {
+            if (input) input.focus();
+            return;
+        }
+        var hidden = __rejectForm.querySelector('input[name="reason"]');
+        if (hidden) hidden.value = reason;
+        __rejectForm.submit();
+    }
+    (function () {
+        var mask = document.getElementById("rejectModalMask");
+        if (!mask) return;
+        mask.addEventListener("click", function (e) {
+            if (e.target === mask) closeRejectModal();
+        });
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") closeRejectModal();
+        });
+    })();
 </script>
 </body>
 </html>

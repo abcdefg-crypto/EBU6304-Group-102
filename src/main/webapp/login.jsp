@@ -127,7 +127,7 @@
     </div>
     <% } %>
 
-    <form action="auth/login" method="post">
+    <form action="<%=request.getContextPath()%>/auth/login" method="post">
         <div class="field">
             <label for="username">Username</label>
             <input id="username" name="username" type="text" required>
@@ -140,9 +140,9 @@
     </form>
 
     <div class="link-row">
-        <a href="role_select.jsp" class="back-link">Switch role</a>
-        <a href="register.jsp" class="back-link">No account? Create profile</a>
-        <a href="index.jsp" class="back-link back-link-home">Back to Home</a>
+        <a href="<%=request.getContextPath()%>/role_select.jsp" class="back-link">Switch role</a>
+        <a href="<%=request.getContextPath()%>/register.jsp" class="back-link">No account? Create profile</a>
+        <a href="<%=request.getContextPath()%>/index.jsp" class="back-link back-link-home">Back to Home</a>
     </div>
 </div>
 </body>

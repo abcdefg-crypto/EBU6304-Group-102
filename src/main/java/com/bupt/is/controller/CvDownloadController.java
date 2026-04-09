@@ -17,6 +17,7 @@ public class CvDownloadController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String cvPath = request.getParameter("cvPath");
+        String download = request.getParameter("download");
         if (cvPath == null || cvPath.trim().isEmpty()) {
             response.sendError(400);
             return;
@@ -44,7 +45,8 @@ public class CvDownloadController extends HttpServlet {
 
         byte[] bytes = Files.readAllBytes(file);
         response.setContentType("application/pdf");
-        response.setHeader("Content-Disposition", "inline; filename=\"" + file.getFileName() + "\"");
+        String disposition = "1".equals(download) ? "attachment" : "inline";
+        response.setHeader("Content-Disposition", disposition + "; filename=\"" + file.getFileName() + "\"");
         response.getOutputStream().write(bytes);
     }
 }

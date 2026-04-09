@@ -88,7 +88,7 @@
             <span>Admin login</span>
         </a>
     </div>
-    <a class="back" href="index.jsp">Back to Home</a>
+    <a class="back" href="<%=request.getContextPath()%>/index.jsp">Back to Home</a>
 </div>
 </body>
 </html>

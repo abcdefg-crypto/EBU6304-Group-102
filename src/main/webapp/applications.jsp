@@ -14,6 +14,7 @@
         .tag.accepted { background:#dcfce7; color:#166534; }
         .tag.rejected { background:#fee2e2; color:#991b1b; }
         .tag.pending { background:#e5e7eb; color:#374151; }
+        .tag { font-weight: 700; }
         .empty { color:#6b7280; font-size:14px; }
         .btn { border-radius: 999px; padding: 8px 14px; border: 1px solid #cbd5f5; background:#fff; color:#2563eb; font-size: 13px; text-decoration:none; display:inline-block; }
         table { width: 100%; border-collapse: collapse; margin-top: 12px; }
