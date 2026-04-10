@@ -9,6 +9,7 @@ import com.bupt.is.repository.impl.FileJobRepository;
 import com.bupt.is.service.ApplicationService;
 import com.bupt.is.util.IdGenerator;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
@@ -48,6 +49,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         app.setJobId(jobId);
         app.setStatus("PENDING");
         app.setCvPath(cvPath);
+        app.setAppliedAt(LocalDate.now().toString());
         app.setScore(0);
 
         applicationRepository.save(app);
@@ -59,15 +61,34 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public void updateStatus(String appId, String status) {
+    public Application getApplicationById(String appId) {
+        if (isBlank(appId)) {
+            return null;
+        }
+        return applicationRepository.findById(appId);
+    }
+
+    @Override
+    public void updateStatus(String appId, String status, String reason) {
         if (isBlank(appId) || isBlank(status)) {
             throw new IllegalArgumentException("appId/status are required");
+        }
+        String normalizedStatus = status.trim().toUpperCase();
+        if (!"PENDING".equals(normalizedStatus)
+                && !"ACCEPTED".equals(normalizedStatus)
+                && !"REJECTED".equals(normalizedStatus)) {
+            throw new IllegalArgumentException("status must be pending/accepted/rejected");
         }
         Application existing = applicationRepository.findById(appId);
         if (existing == null) {
             throw new IllegalArgumentException("application not found");
         }
-        existing.updateStatus(status);
+        existing.updateStatus(normalizedStatus);
+        if ("REJECTED".equals(normalizedStatus)) {
+            existing.setRejectionReason(isBlank(reason) ? "未填写拒绝原因" : reason.trim());
+        } else {
+            existing.setRejectionReason(null);
+        }
         applicationRepository.update(existing);
     }
 

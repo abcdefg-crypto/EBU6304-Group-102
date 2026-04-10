@@ -8,7 +8,9 @@ public class Application {
 
     private String status;
     private String cvPath;
+    private String appliedAt;
     private int score;
+    private String rejectionReason;
 
     public Application() {}
 
@@ -28,8 +30,14 @@ public class Application {
     public String getCvPath() { return cvPath; }
     public void setCvPath(String cvPath) { this.cvPath = cvPath; }
 
+    public String getAppliedAt() { return appliedAt; }
+    public void setAppliedAt(String appliedAt) { this.appliedAt = appliedAt; }
+
     public int getScore() { return score; }
     public void setScore(int score) { this.score = score; }
+
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
 
     // ===== Business Methods =====
     public void updateStatus(String status) {

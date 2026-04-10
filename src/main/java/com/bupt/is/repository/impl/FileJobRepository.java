@@ -56,6 +56,29 @@ public class FileJobRepository implements JobRepository {
     }
 
     @Override
+    public List<Job> searchOpenJobs(String keyword) {
+        String normalized = keyword == null ? "" : keyword.trim().toLowerCase();
+        return loadAll().stream()
+                .filter(Job::isOpen)
+                .filter(job -> contains(job.getTitle(), normalized)
+                        || contains(job.getModule(), normalized)
+                        || contains(job.getDescription(), normalized)
+                        || containsSkills(job, normalized))
+                .collect(Collectors.toList());
+    }
+
+    private static boolean contains(String value, String keyword) {
+        return value != null && value.toLowerCase().contains(keyword);
+    }
+
+    private static boolean containsSkills(Job job, String keyword) {
+        if (job.getRequiredSkills() == null) {
+            return false;
+        }
+        return job.getRequiredSkills().stream().anyMatch(skill -> contains(skill, keyword));
+    }
+
+    @Override
     public void update(Job job) {
         List<Job> jobs = loadAll().stream()
                 .map(j -> Objects.equals(j.getJobId(), job.getJobId()) ? job : j)

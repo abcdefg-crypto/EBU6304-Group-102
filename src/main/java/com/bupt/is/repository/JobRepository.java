@@ -13,5 +13,7 @@ public interface JobRepository {
 
     List<Job> findOpenJobs();
 
+    List<Job> searchOpenJobs(String keyword);
+
     void update(Job job);
 }
