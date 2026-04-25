@@ -14,7 +14,11 @@ public interface JobService {
 
     List<Job> searchAvailableJobs(String keyword);
 
+    List<Job> getAllJobs();
+
+    List<Job> searchAllJobs(String keyword);
+
     Job getJobById(String jobId);
 
-    void closeJob(String jobId);
+    void closeJob(String jobId, User mo);
 }

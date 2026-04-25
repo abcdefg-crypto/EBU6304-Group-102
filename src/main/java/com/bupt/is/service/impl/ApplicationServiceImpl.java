@@ -32,7 +32,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             throw new IllegalArgumentException("job not found");
         }
         if (!job.isOpen()) {
-            throw new IllegalArgumentException("job is not open");
+            throw new IllegalArgumentException("This job has been closed and no longer accepts new applications");
         }
 
         // Duplicate application check.

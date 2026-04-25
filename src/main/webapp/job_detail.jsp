@@ -63,8 +63,10 @@
         boolean canApply = request.getAttribute("canApply") != null && (boolean) request.getAttribute("canApply");
         boolean hasApplied = request.getAttribute("hasApplied") != null && (boolean) request.getAttribute("hasApplied");
         boolean canEditJob = request.getAttribute("canEditJob") != null && (boolean) request.getAttribute("canEditJob");
+        boolean canCloseJob = request.getAttribute("canCloseJob") != null && (boolean) request.getAttribute("canCloseJob");
         String statusUpdated = request.getParameter("statusUpdated");
         String statusError = request.getParameter("statusError");
+        String closed = request.getParameter("closed");
     %>
     <% if (error != null) { %>
         <div class="error"><%= error %></div>
@@ -77,10 +79,15 @@
     <% if ("1".equals(statusError)) { %>
         <div class="error">Status update failed. Please try again.</div>
     <% } %>
+    <% if ("1".equals(closed)) { %>
+        <div style="background:#dcfce7;color:#166534;padding:10px;border-radius:10px;font-size:13px;margin-bottom:14px;">
+            Job posting closed successfully. No further applications are accepted.
+        </div>
+    <% } %>
 
     <div class="grid">
         <div class="card">
-            <div class="tag"><%= job != null ? job.getStatus() : "" %></div>
+            <div class="tag"><%= job != null ? (job.isOpen() ? "ACTIVE" : job.getStatus()) : "" %></div>
             <h2 style="font-size:18px;margin-top:10px;"><%= job != null ? job.getTitle() : "" %></h2>
             <div class="meta">Job ID: <%= job != null ? job.getJobId() : "" %></div>
             <div class="meta">Module: <%= job != null ? job.getModule() : "" %></div>
@@ -106,8 +113,17 @@
             <div class="meta">Please review responsibilities based on job description and required skills.</div>
 
             <% if (canEditJob && job != null) { %>
-                <div style="margin-top:16px;">
+                <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
                     <a class="btn" style="background:#7c3aed;" href="<%=request.getContextPath()%>/jobs/post?jobId=<%= job.getJobId() %>">Edit Job</a>
+                    <% if (canCloseJob) { %>
+                        <form action="<%=request.getContextPath()%>/jobs/close" method="post" onsubmit="return confirm('Close this job posting? After closing, no further applications will be accepted.');">
+                            <input type="hidden" name="jobId" value="<%= job.getJobId() %>">
+                            <input type="hidden" name="returnTo" value="detail">
+                            <button type="submit" class="btn" style="background:#dc2626;">Close Job Posting</button>
+                        </form>
+                    <% } else if (job != null && !job.isOpen()) { %>
+                        <div class="meta" style="align-self:center;">This job posting is closed.</div>
+                    <% } %>
                 </div>
             <% } %>
 
@@ -123,7 +139,7 @@
                             <button type="submit" class="btn">Apply for this Job</button>
                         </form>
                     <% } else { %>
-                        <div class="meta">This job is currently not open for application.</div>
+                        <div class="meta">This job is currently closed and no further applications are accepted.</div>
                     <% } %>
                 </div>
             <% } %>
