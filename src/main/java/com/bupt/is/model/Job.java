@@ -43,7 +43,11 @@ public class Job {
 
     // ===== Business Methods =====
     public boolean isOpen() {
-        return "OPEN".equalsIgnoreCase(status);
+        return "OPEN".equalsIgnoreCase(status) || "ACTIVE".equalsIgnoreCase(status);
+    }
+
+    public boolean isClosed() {
+        return "CLOSED".equalsIgnoreCase(status);
     }
 
     public void closeJob() {

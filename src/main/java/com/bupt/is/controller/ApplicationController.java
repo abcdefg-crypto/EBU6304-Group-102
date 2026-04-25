@@ -82,6 +82,9 @@ public class ApplicationController extends HttpServlet {
             request.setAttribute("role", sessionUser.role);
             request.setAttribute("job", job);
             request.setAttribute("canApply", job != null && job.isOpen());
+            request.setAttribute("hasApplied", false);
+            request.setAttribute("canEditJob", false);
+            request.setAttribute("canCloseJob", false);
             request.setAttribute("error", e.getMessage());
             request.getRequestDispatcher("/job_detail.jsp").forward(request, response);
         }

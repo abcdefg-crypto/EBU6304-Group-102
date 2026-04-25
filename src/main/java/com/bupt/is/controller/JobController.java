@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@WebServlet(urlPatterns = {"/jobs", "/jobs/detail", "/jobs/post", "/jobs/applicants", "/jobs/applicant-detail"})
+@WebServlet(urlPatterns = {"/jobs", "/jobs/detail", "/jobs/post", "/jobs/close", "/jobs/applicants", "/jobs/applicant-detail"})
 public class JobController extends HttpServlet {
 
     private final JobService jobService = new JobServiceImpl();
@@ -64,6 +64,10 @@ public class JobController extends HttpServlet {
             doPostJob(request, response);
             return;
         }
+        if ("/jobs/close".equals(servletPath)) {
+            doCloseJob(request, response);
+            return;
+        }
         response.sendError(404);
     }
 
@@ -73,7 +77,10 @@ public class JobController extends HttpServlet {
         String view = request.getParameter("view");
         String keyword = request.getParameter("keyword");
         boolean searchMode = keyword != null && !keyword.trim().isEmpty();
-        List<Job> jobs = searchMode ? jobService.searchAvailableJobs(keyword) : jobService.getAvailableJobs();
+        boolean moManagementView = "MO".equals(role) && view != null && !view.trim().isEmpty();
+        List<Job> jobs = moManagementView
+                ? (searchMode ? jobService.searchAllJobs(keyword) : jobService.getAllJobs())
+                : (searchMode ? jobService.searchAvailableJobs(keyword) : jobService.getAvailableJobs());
 
         // MO manage views should only see jobs posted by current MO.
         if ("MO".equals(role) && userId != null && view != null && !view.trim().isEmpty()) {
@@ -123,6 +130,7 @@ public class JobController extends HttpServlet {
 
         boolean canEditJob = "MO".equals(role) && userId != null && Objects.equals(userId, job.getPostedBy());
         request.setAttribute("canEditJob", canEditJob);
+        request.setAttribute("canCloseJob", canEditJob && job.isOpen());
 
         if ("MO".equals(role)) {
             List<Application> apps = applicationService.getApplicantsForJob(jobId);
@@ -162,6 +170,61 @@ public class JobController extends HttpServlet {
         }
 
         request.getRequestDispatcher("/mo_post_job.jsp").forward(request, response);
+    }
+
+
+    private void doCloseJob(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        SessionUser sessionUser;
+        try {
+            sessionUser = requireSessionUser(request);
+        } catch (IllegalArgumentException e) {
+            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            return;
+        }
+        if (!"MO".equals(sessionUser.role)) {
+            response.sendError(403);
+            return;
+        }
+
+        String jobId = request.getParameter("jobId");
+        if (jobId == null || jobId.trim().isEmpty()) {
+            response.sendError(400);
+            return;
+        }
+
+        User mo = userService.findById(sessionUser.userId);
+        if (mo == null) {
+            response.sendError(403);
+            return;
+        }
+
+        try {
+            jobService.closeJob(jobId.trim(), mo);
+            String returnTo = request.getParameter("returnTo");
+            if ("detail".equalsIgnoreCase(returnTo)) {
+                response.sendRedirect(request.getContextPath() + "/jobs/detail?jobId=" + jobId.trim() + "&closed=1");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/jobs?view=manage-jobs&closed=1");
+            }
+        } catch (IllegalArgumentException e) {
+            Job job = jobService.getJobById(jobId.trim());
+            request.setAttribute("role", sessionUser.role);
+            request.setAttribute("job", job);
+            request.setAttribute("error", e.getMessage());
+            if (job != null) {
+                request.setAttribute("canEditJob", Objects.equals(sessionUser.userId, job.getPostedBy()));
+                request.setAttribute("canCloseJob", Objects.equals(sessionUser.userId, job.getPostedBy()) && job.isOpen());
+                List<Application> apps = applicationService.getApplicantsForJob(jobId.trim());
+                java.util.Map<String, String> applicantNameMap = new java.util.HashMap<>();
+                for (Application a : apps) {
+                    User u = userService.findById(a.getApplicantId());
+                    applicantNameMap.put(a.getApplicantId(), u != null ? u.getUsername() : a.getApplicantId());
+                }
+                request.setAttribute("applications", apps);
+                request.setAttribute("applicantNameMap", applicantNameMap);
+            }
+            request.getRequestDispatcher("/job_detail.jsp").forward(request, response);
+        }
     }
 
     private void doPostJob(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

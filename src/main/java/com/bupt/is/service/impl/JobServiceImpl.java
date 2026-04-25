@@ -43,7 +43,7 @@ public class JobServiceImpl implements JobService {
         }
 
         job.setPostedBy(mo.getId());
-        job.setStatus("OPEN");
+        job.setStatus("ACTIVE");
         jobRepository.save(job);
     }
 
@@ -95,6 +95,32 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
+    public List<Job> getAllJobs() {
+        return jobRepository.findAll();
+    }
+
+    @Override
+    public List<Job> searchAllJobs(String keyword) {
+        if (isBlank(keyword)) {
+            return getAllJobs();
+        }
+        String normalized = keyword.trim().toLowerCase();
+        List<Job> matches = new ArrayList<>();
+        for (Job job : jobRepository.findAll()) {
+            if (job == null) {
+                continue;
+            }
+            if (contains(job.getTitle(), normalized)
+                    || contains(job.getModule(), normalized)
+                    || contains(job.getDescription(), normalized)
+                    || containsSkills(job, normalized)) {
+                matches.add(job);
+            }
+        }
+        return matches;
+    }
+
+    @Override
     public Job getJobById(String jobId) {
         if (isBlank(jobId)) {
             return null;
@@ -103,13 +129,38 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public void closeJob(String jobId) {
+    public void closeJob(String jobId, User mo) {
+        if (mo == null || isBlank(mo.getId())) {
+            throw new IllegalArgumentException("mo is required");
+        }
         Job job = getJobById(jobId);
         if (job == null) {
             throw new IllegalArgumentException("job not found");
         }
+        if (!Objects.equals(job.getPostedBy(), mo.getId())) {
+            throw new IllegalArgumentException("only the posting MO can close this job");
+        }
+        if (!job.isOpen()) {
+            throw new IllegalArgumentException("job is already closed");
+        }
         job.closeJob();
         jobRepository.update(job);
+    }
+
+    private static boolean contains(String value, String keyword) {
+        return value != null && value.toLowerCase().contains(keyword);
+    }
+
+    private static boolean containsSkills(Job job, String keyword) {
+        if (job.getRequiredSkills() == null) {
+            return false;
+        }
+        for (String skill : job.getRequiredSkills()) {
+            if (contains(skill, keyword)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean isBlank(String s) {

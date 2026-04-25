@@ -110,6 +110,7 @@
                 String applied = request.getParameter("applied");
                 String posted = request.getParameter("posted");
                 String updated = request.getParameter("updated");
+                String closed = request.getParameter("closed");
                 String error = (String) request.getAttribute("error");
                 String keyword = (String) request.getAttribute("keyword");
                 Boolean searchMode = (Boolean) request.getAttribute("searchMode");
@@ -125,6 +126,9 @@
             <% } %>
             <% if ("1".equals(updated)) { %>
                 <div class="success">Job information updated.</div>
+            <% } %>
+            <% if ("1".equals(closed)) { %>
+                <div class="success">Job posting closed successfully. No further applications are accepted.</div>
             <% } %>
         </div>
 
@@ -213,7 +217,7 @@
                 %>
                     <div class="card" style="grid-column: 1 / -1;">
                         <div class="meta">
-                            <%= (searchMode != null && searchMode) ? "No matching jobs found." : "No open jobs available." %>
+                            <%= (searchMode != null && searchMode) ? "No matching jobs found." : ("MO".equals(role) ? "No jobs available." : "No open jobs available.") %>
                         </div>
                         <% if ("MO".equals(role)) { %>
                             <a class="btn btn-primary" href="<%=request.getContextPath()%>/jobs/post">Post a Job</a>
@@ -224,7 +228,7 @@
                         for (com.bupt.is.model.Job job : jobs) {
                 %>
                 <div class="card">
-                    <div class="tag"><%= job.isOpen() ? "OPEN" : job.getStatus() %></div>
+                    <div class="tag"><%= job.isOpen() ? "ACTIVE" : job.getStatus() %></div>
                     <h3><%= job.getTitle() %></h3>
                     <div class="meta">Module: <%= job.getModule() %></div>
                     <div class="meta">Max Applicants: <%= job.getMaxApplicants() %></div>
@@ -242,10 +246,14 @@
                     </ul>
                     <% if ("MO".equals(role) && moManageApplicantsView) { %>
                         <a class="btn" href="<%=request.getContextPath()%>/jobs/applicants?jobId=<%= job.getJobId() %>">Manage Applicants</a>
-                    <% } else if ("MO".equals(role)) { %>
-                        <a class="btn" href="<%=request.getContextPath()%>/jobs/post?jobId=<%= job.getJobId() %>">View Detail</a>
                     <% } else { %>
                         <a class="btn" href="<%=request.getContextPath()%>/jobs/detail?jobId=<%= job.getJobId() %>">View Detail</a>
+                    <% } %>
+                    <% if ("MO".equals(role) && moManageJobsView && job.isOpen()) { %>
+                        <form action="<%=request.getContextPath()%>/jobs/close" method="post" style="margin-top:10px;" onsubmit="return confirm('Close this job posting? After closing, no further applications will be accepted.');">
+                            <input type="hidden" name="jobId" value="<%= job.getJobId() %>">
+                            <button type="submit" class="btn" style="background:#dc2626;color:#fff;border:none;">Close Job Posting</button>
+                        </form>
                     <% } %>
                 </div>
                 <%
