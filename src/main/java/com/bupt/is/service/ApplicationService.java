@@ -13,5 +13,7 @@ public interface ApplicationService {
 
     void updateStatus(String appId, String status, String reason);
 
+    void withdrawApplication(String userId, String appId);
+
     List<Application> getApplicantsForJob(String jobId);
 }

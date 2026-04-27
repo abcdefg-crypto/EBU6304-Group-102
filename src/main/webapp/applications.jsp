@@ -41,12 +41,24 @@
 
     <%
         String submitted = request.getParameter("submitted");
+        String withdrawn = request.getParameter("withdrawn");
+        String withdrawError = request.getParameter("withdrawError");
         String submittedJobTitle = request.getParameter("jobTitle");
         String submittedAppliedAt = request.getParameter("appliedAt");
     %>
     <% if ("1".equals(submitted)) { %>
         <div style="background:#dcfce7;color:#166534;padding:10px;border-radius:10px;font-size:13px;margin-bottom:14px;">
             Application submitted: "<%= submittedJobTitle == null ? "-" : submittedJobTitle %>", date <%= submittedAppliedAt == null ? "-" : submittedAppliedAt %>.
+        </div>
+    <% } %>
+    <% if ("1".equals(withdrawn)) { %>
+        <div style="background:#dbeafe;color:#1d4ed8;padding:10px;border-radius:10px;font-size:13px;margin-bottom:14px;">
+            Application withdrawn successfully.
+        </div>
+    <% } %>
+    <% if (withdrawError != null && !withdrawError.trim().isEmpty()) { %>
+        <div style="background:#fee2e2;color:#991b1b;padding:10px;border-radius:10px;font-size:13px;margin-bottom:14px;">
+            Withdraw failed: <%= withdrawError %>
         </div>
     <% } %>
 
@@ -62,9 +74,10 @@
         <table>
             <thead>
                 <tr>
-                    <th style="width:35%;">Job</th>
-                    <th style="width:20%;">Status</th>
+                    <th style="width:32%;">Job</th>
+                    <th style="width:16%;">Status</th>
                     <th>Reason (What do you lack)</th>
+                    <th style="width:16%;">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -101,6 +114,16 @@
                         <span class="tag <%= tagClass %>"><%= statusText %></span>
                     </td>
                     <td class="reason-muted"><%= reasonText %></td>
+                    <td>
+                        <% if (!"ACCEPTED".equals(status)) { %>
+                        <form method="post" action="<%=request.getContextPath()%>/applications/withdraw" onsubmit="return confirm('Withdraw this application?');">
+                            <input type="hidden" name="appId" value="<%= appView.getApplicationId() %>">
+                            <button type="submit" class="btn" style="border-color:#fecaca;color:#dc2626;">Withdraw</button>
+                        </form>
+                        <% } else { %>
+                        <span class="reason-muted">Cannot withdraw accepted application</span>
+                        <% } %>
+                    </td>
                 </tr>
             <%
             }

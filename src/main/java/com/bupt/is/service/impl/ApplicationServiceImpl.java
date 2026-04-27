@@ -93,6 +93,24 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    public void withdrawApplication(String userId, String appId) {
+        if (isBlank(userId) || isBlank(appId)) {
+            throw new IllegalArgumentException("userId/appId are required");
+        }
+        Application existing = applicationRepository.findById(appId);
+        if (existing == null) {
+            throw new IllegalArgumentException("application not found");
+        }
+        if (!Objects.equals(userId, existing.getApplicantId())) {
+            throw new IllegalArgumentException("You can only withdraw your own application");
+        }
+        if (!"PENDING".equalsIgnoreCase(existing.getStatus())) {
+            throw new IllegalArgumentException("Only pending applications can be withdrawn");
+        }
+        applicationRepository.deleteById(appId);
+    }
+
+    @Override
     public List<Application> getApplicantsForJob(String jobId) {
         if (isBlank(jobId)) {
             return List.of();

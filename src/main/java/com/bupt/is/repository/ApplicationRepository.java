@@ -14,4 +14,6 @@ public interface ApplicationRepository {
     List<Application> findByJob(String jobId);
 
     void update(Application application);
+
+    void deleteById(String applicationId);
 }

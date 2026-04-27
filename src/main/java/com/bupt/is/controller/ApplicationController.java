@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-@WebServlet(urlPatterns = {"/applications", "/applications/apply", "/applications/status"})
+@WebServlet(urlPatterns = {"/applications", "/applications/apply", "/applications/status", "/applications/withdraw"})
 public class ApplicationController extends HttpServlet {
 
     private final ApplicationService applicationService = new ApplicationServiceImpl();
@@ -43,6 +43,10 @@ public class ApplicationController extends HttpServlet {
         String servletPath = request.getServletPath();
         if ("/applications/status".equals(servletPath)) {
             doStatusUpdate(request, response);
+            return;
+        }
+        if ("/applications/withdraw".equals(servletPath)) {
+            doWithdraw(request, response);
             return;
         }
 
@@ -167,6 +171,34 @@ public class ApplicationController extends HttpServlet {
         request.setAttribute("role", sessionUser.role);
         request.setAttribute("applications", views);
         request.getRequestDispatcher("/applications.jsp").forward(request, response);
+    }
+
+    private void doWithdraw(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        SessionUser sessionUser;
+        try {
+            sessionUser = requireSessionUser(request);
+        } catch (IllegalArgumentException e) {
+            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            return;
+        }
+
+        if (!"TA".equals(sessionUser.role)) {
+            response.sendError(403);
+            return;
+        }
+
+        String appId = request.getParameter("appId");
+        if (appId == null || appId.trim().isEmpty()) {
+            response.sendError(400);
+            return;
+        }
+
+        try {
+            applicationService.withdrawApplication(sessionUser.userId, appId);
+            response.sendRedirect(request.getContextPath() + "/applications?withdrawn=1");
+        } catch (IllegalArgumentException e) {
+            response.sendRedirect(request.getContextPath() + "/applications?withdrawError=" + URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8));
+        }
     }
 
     private static SessionUser requireSessionUser(HttpServletRequest request) {

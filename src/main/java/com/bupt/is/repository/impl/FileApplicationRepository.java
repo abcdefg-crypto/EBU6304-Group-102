@@ -64,5 +64,13 @@ public class FileApplicationRepository implements ApplicationRepository {
                 .collect(Collectors.toList());
         saveAll(apps);
     }
+
+    @Override
+    public void deleteById(String applicationId) {
+        List<Application> apps = loadAll().stream()
+                .filter(a -> !Objects.equals(a.getApplicationId(), applicationId))
+                .collect(Collectors.toList());
+        saveAll(apps);
+    }
 }
 
