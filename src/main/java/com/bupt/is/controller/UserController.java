@@ -15,13 +15,13 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 
 import java.io.IOException;
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
-@WebServlet(urlPatterns = {"/user/register", "/user/profile", "/user/cv/upload"})
+@WebServlet(urlPatterns = {"/user/register", "/user/profile", "/user/cv/upload", "/user/cv/delete"})
 @MultipartConfig(
         fileSizeThreshold = 1024 * 1024, // 1MB
         maxFileSize = 10 * 1024 * 1024,  // 10MB
@@ -49,6 +49,7 @@ public class UserController extends HttpServlet {
                 case "/user/register" -> doRegister(request, response);
                 case "/user/profile" -> doProfilePost(request, response);
                 case "/user/cv/upload" -> doCvUpload(request, response);
+                case "/user/cv/delete" -> doCvDelete(request, response);
                 default -> response.sendError(404);
             }
         } catch (IllegalArgumentException e) {
@@ -69,9 +70,11 @@ public class UserController extends HttpServlet {
         String name = request.getParameter("name");
         String studentId = request.getParameter("studentId");
         String phoneNumber = request.getParameter("phoneNumber"); // 获取新字段
+        String skills = request.getParameter("skills");
+        String selfIntroduction = request.getParameter("selfIntroduction");
 
         // 封装 Profile 逻辑
-        ApplicantProfile profile = new ApplicantProfile(name, studentId, phoneNumber);
+        ApplicantProfile profile = new ApplicantProfile(name, studentId, phoneNumber, skills, selfIntroduction);
         existing.setEmail(email);
         existing.setProfile(GsonUtil.toJson(profile));
 
@@ -85,26 +88,47 @@ public class UserController extends HttpServlet {
 
         Part cvPart = request.getPart("cv");
         if (cvPart == null || cvPart.getSize() <= 0) {
-            throw new IllegalArgumentException("请选择要上传的文件");
+            throw new IllegalArgumentException("Please select a file to upload");
         }
 
         String submittedName = cvPart.getSubmittedFileName();
         if (submittedName == null || !submittedName.toLowerCase().endsWith(".pdf")) {
-            throw new IllegalArgumentException("Story 5 要求：仅支持 PDF 格式");
+            throw new IllegalArgumentException("Only PDF format is supported");
         }
 
-        // 使用 getServletContext().getRealPath 确保在服务器部署目录下创建文件夹
-        String uploadPath = getServletContext().getRealPath("/data/cv");
-        File uploadDir = new File(uploadPath);
-        if (!uploadDir.exists()) uploadDir.mkdirs();
-
         String fileName = userId + ".pdf";
-        cvPart.write(uploadPath + File.separator + fileName);
+        Path cvDir = Paths.get("data", "cv").toAbsolutePath().normalize();
+        Files.createDirectories(cvDir);
+        Path targetFile = cvDir.resolve(fileName);
+        try (var input = cvPart.getInputStream()) {
+            Files.copy(input, targetFile, StandardCopyOption.REPLACE_EXISTING);
+        }
 
-        // 保存相对路径，方便后续通过 Web 访问
-        String relativePath = "data/cv/" + fileName;
+        // 保存相对路径，方便下载控制器在 data 目录内定位
+        String relativePath = "cv/" + fileName;
         userService.uploadCv(userId, relativePath);
         response.sendRedirect(request.getContextPath() + "/user/profile?cv=1");
+    }
+
+    private void doCvDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        HttpSession session = request.getSession(false);
+        String userId = (String) session.getAttribute("userId");
+        User existing = userService.findById(userId);
+        if (existing == null) {
+            response.sendRedirect(request.getContextPath() + "/login.jsp?error=1");
+            return;
+        }
+
+        String cvPath = existing.getCvPath();
+        if (cvPath != null && !cvPath.trim().isEmpty()) {
+            Path filePath = Paths.get("data").toAbsolutePath().normalize().resolve(cvPath).normalize();
+            if (filePath.startsWith(Paths.get("data").toAbsolutePath().normalize())) {
+                Files.deleteIfExists(filePath);
+            }
+        }
+
+        userService.uploadCv(userId, null);
+        response.sendRedirect(request.getContextPath() + "/user/profile?cvDeleted=1");
     }
 
     private void doRegister(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -115,8 +139,10 @@ public class UserController extends HttpServlet {
         String studentId = request.getParameter("studentId");
         String role = request.getParameter("role");
         String phoneNumber = request.getParameter("phoneNumber");
+        String skills = request.getParameter("skills");
+        String selfIntroduction = request.getParameter("selfIntroduction");
 
-        ApplicantProfile profile = new ApplicantProfile(name, studentId, phoneNumber);
+        ApplicantProfile profile = new ApplicantProfile(name, studentId, phoneNumber, skills, selfIntroduction);
 
         User user = new User();
         user.setUsername(username);
@@ -126,7 +152,11 @@ public class UserController extends HttpServlet {
         user.setRoles(roleToRoles(role));
 
         userService.createProfile(user);
-        response.sendRedirect(request.getContextPath() + "/login.jsp?registered=1");
+        // After registration, always go through role selection first.
+        // This avoids "Please select a login role first" on the login endpoint.
+        HttpSession session = request.getSession(true);
+        session.removeAttribute("selectedRole");
+        response.sendRedirect(request.getContextPath() + "/role_select.jsp");
     }
 
     private void doProfileGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -146,12 +176,12 @@ public class UserController extends HttpServlet {
 
     private static ApplicantProfile parseApplicantProfile(String profileJson) {
         if (profileJson == null || profileJson.trim().isEmpty()) {
-            return new ApplicantProfile("", "", "");
+            return new ApplicantProfile("", "", "", "", "");
         }
         try {
             return GsonUtil.fromJson(profileJson, ApplicantProfile.class);
         } catch (Exception e) {
-            return new ApplicantProfile("", "", "");
+            return new ApplicantProfile("", "", "", "", "");
         }
     }
 

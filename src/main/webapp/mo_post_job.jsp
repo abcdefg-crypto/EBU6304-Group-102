@@ -3,7 +3,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>发布岗位 - TA Recruitment System</title>
+    <title>Post Job - TA Recruitment System</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; background: #f5f7fb; }
         header { background: #1f3c88; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
@@ -30,12 +30,12 @@
 <body>
 <header>
     <div>
-        <strong>发布岗位</strong>
-        <span style="margin-left:10px;font-size:13px;opacity:0.9;">角色：<%= request.getAttribute("role") %></span>
+        <strong>Post Job</strong>
+        <span style="margin-left:10px;font-size:13px;opacity:0.9;">Role: <%= request.getAttribute("role") %></span>
     </div>
     <div>
-        <a href="<%=request.getContextPath()%>/jobs">岗位列表</a>
-        <a href="<%=request.getContextPath()%>/auth/logout">退出</a>
+        <a href="<%=request.getContextPath()%>/jobs">Back to Home</a>
+        <a href="<%=request.getContextPath()%>/auth/logout">Logout</a>
     </div>
 </header>
 
@@ -64,41 +64,41 @@
     <% } %>
 
     <div class="card">
-        <h2 style="font-size:16px;margin-top:0;"><%= editing ? "编辑岗位" : "MO 岗位发布（Story13）" %></h2>
-        <p style="color:#6b7280;font-size:13px;margin-top:0;">必填：标题、描述、课程/模块、技能与资格要求、最大人数。</p>
+        <h2 style="font-size:16px;margin-top:0;"><%= editing ? "Edit Job" : "MO Job Posting" %></h2>
+        <p style="color:#6b7280;font-size:13px;margin-top:0;">Required: title, description, module, required skills/qualifications, max applicants.</p>
 
         <form action="<%= request.getContextPath() %>/jobs/post" method="post">
             <% if (editing) { %>
                 <input type="hidden" name="jobId" value="<%= editJob.getJobId() %>">
             <% } %>
             <div class="field">
-                <label>岗位标题</label>
+                <label>Job Title</label>
                 <input type="text" name="title" required value="<%= titleVal %>">
             </div>
             <div class="field">
-                <label>课程/模块</label>
+                <label>Module</label>
                 <input type="text" name="module" required value="<%= moduleVal %>">
             </div>
             <div class="field">
-                <label>必需技能 / 资格要求（逗号、分号或换行分隔）</label>
-                <input type="text" name="requiredSkills" placeholder="例如：Java, 数据结构, 有相关助教经验" required value="<%= skillsVal %>">
+                <label>Required Skills / Qualifications (comma, semicolon, or newline separated)</label>
+                <input type="text" name="requiredSkills" placeholder="e.g. Java, Data Structures, TA experience" required value="<%= skillsVal %>">
             </div>
             <div class="field">
-                <label>最大申请人数</label>
+                <label>Max Applicants</label>
                 <input type="text" name="maxApplicants" required value="<%= maxVal %>">
             </div>
             <div class="field">
-                <label>岗位描述</label>
+                <label>Job Description</label>
                 <textarea name="description" required><%= descVal %></textarea>
             </div>
 
-            <button type="submit" class="btn-primary"><%= editing ? "保存修改" : "发布岗位" %></button>
-            <a href="<%=request.getContextPath()%>/jobs" class="btn-outline">返回岗位列表</a>
+            <button type="submit" class="btn-primary"><%= editing ? "Save Changes" : "Post Job" %></button>
+            <a href="<%=request.getContextPath()%>/jobs?view=manage-jobs" class="btn-outline">Cancel</a>
         </form>
     </div>
 
     <div style="margin-top:14px;color:#6b7280;font-size:13px;">
-        提示：TA 登录后会在岗位列表中看到 OPEN 岗位，并可在详情页申请。
+        Tip: TA users can see OPEN jobs in the list and apply from the detail page.
     </div>
 </main>
 </body>
