@@ -14,4 +14,9 @@ public interface ApplicationService {
     void updateStatus(String appId, String status, String reason);
 
     List<Application> getApplicantsForJob(String jobId);
+
+    /**
+     * All applications in the system (for admin monitoring).
+     */
+    List<Application> getAllApplications();
 }

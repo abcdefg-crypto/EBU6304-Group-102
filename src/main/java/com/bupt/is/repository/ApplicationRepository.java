@@ -13,5 +13,7 @@ public interface ApplicationRepository {
 
     List<Application> findByJob(String jobId);
 
+    List<Application> findAll();
+
     void update(Application application);
 }

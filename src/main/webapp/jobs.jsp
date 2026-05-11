@@ -178,8 +178,9 @@
                     <a class="ta-card" href="javascript:void(0)">
                         <p class="ta-card-title">Workload Overview</p>
                     </a>
-                    <a class="ta-card" href="javascript:void(0)">
+                    <a class="ta-card" href="<%=request.getContextPath()%>/admin/applications">
                         <p class="ta-card-title">All Applications</p>
+                        <p class="ta-card-sub">Monitor recruitment across all jobs</p>
                     </a>
                     <a class="ta-card" href="javascript:void(0)">
                         <p class="ta-card-title">Workload Reports</p>

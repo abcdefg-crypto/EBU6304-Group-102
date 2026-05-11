@@ -10,6 +10,7 @@ import com.bupt.is.service.ApplicationService;
 import com.bupt.is.util.IdGenerator;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -98,6 +99,15 @@ public class ApplicationServiceImpl implements ApplicationService {
             return List.of();
         }
         return applicationRepository.findByJob(jobId);
+    }
+
+    @Override
+    public List<Application> getAllApplications() {
+        List<Application> apps = applicationRepository.findAll();
+        apps.sort(Comparator
+                .comparing(Application::getAppliedAt, Comparator.nullsLast(Comparator.reverseOrder()))
+                .thenComparing(Application::getApplicationId, Comparator.nullsLast(Comparator.reverseOrder())));
+        return apps;
     }
 
     private static boolean isBlank(String s) {
