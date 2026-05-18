@@ -179,13 +179,13 @@
                         <p class="ta-card-title">Workload Overview</p>
                         <p class="ta-card-sub">View TA workloads</p>
                     </a>
-                    <a class="ta-card" href="<%=request.getContextPath()%>/admin/workload">
-                        <p class="ta-card-title">All Assigned Jobs</p>
-                        <p class="ta-card-sub">View all assigned TA jobs</p>
+                    <a class="ta-card" href="<%=request.getContextPath()%>/admin/applications">
+                        <p class="ta-card-title">All Applications</p>
+                        <p class="ta-card-sub">Monitor every job application</p>
                     </a>
-                    <a class="ta-card" href="<%=request.getContextPath()%>/admin/workload">
-                        <p class="ta-card-title">Workload Reports</p>
-                        <p class="ta-card-sub">Fair distribution analysis</p>
+                    <a class="ta-card" href="<%=request.getContextPath()%>/admin/report">
+                        <p class="ta-card-title">Workload Report</p>
+                        <p class="ta-card-sub">View TA report summary</p>
                     </a>
                 </div>
             </div>

@@ -58,6 +58,11 @@ public class FileApplicationRepository implements ApplicationRepository {
     }
 
     @Override
+    public List<Application> findAll() {
+        return loadAll();
+    }
+
+    @Override
     public void update(Application application) {
         List<Application> apps = loadAll().stream()
                 .map(a -> Objects.equals(a.getApplicationId(), application.getApplicationId()) ? application : a)

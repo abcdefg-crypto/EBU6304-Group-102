@@ -40,6 +40,11 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    public List<Application> getAllApplications() {
+        return applicationRepository.findAll();
+    }
+
+    @Override
     public List<String> getOverloadedUsers() {
         Map<String, Integer> workloads = getAllWorkloads();
         if (workloads.isEmpty()) return List.of();
